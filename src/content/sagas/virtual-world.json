@@ -1,0 +1,19 @@
+{
+  "title": "The Virtual World Saga",
+  "shortTitle": "Virtual World",
+  "summary": "When the boundary between a simulated reality and the world that built it begins to thin, a handful of travellers must decide what is real enough to protect.",
+  "order": 1,
+  "status": "published",
+  "locale": "en",
+  "tags": ["virtual-world", "lyria", "science-fantasy"],
+  "image": "/placeholder.svg",
+  "imageAlt": "Neutral placeholder artwork for The Virtual World Saga.",
+  "theme": {
+    "primary": "#7c5cff",
+    "accent": "#38d6b0",
+    "background": "#0a0a14",
+    "surface": "#141426",
+    "text": "#ececf5",
+    "muted": "#9a9aba"
+  }
+}

@@ -1,0 +1,27 @@
+---
+import { SITE } from '../lib/site';
+import { normalizePath, withBase } from '../lib/paths';
+
+const home = normalizePath(withBase(''));
+const sagas = normalizePath(withBase('sagas/'));
+const current = normalizePath(Astro.url.pathname);
+
+const isHome = current === home;
+const isSagas = current === sagas || current.startsWith(`${sagas}/`);
+---
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href={withBase('')}>{SITE.name}</a>
+    <nav class="site-nav" aria-label="Primary">
+      <ul>
+        <li>
+          <a href={withBase('')} aria-current={isHome ? 'page' : undefined}>Home</a>
+        </li>
+        <li>
+          <a href={withBase('sagas/')} aria-current={isSagas ? 'page' : undefined}>Sagas</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>

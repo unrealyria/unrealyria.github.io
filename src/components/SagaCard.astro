@@ -1,0 +1,38 @@
+---
+import type { Saga } from '../lib/cms/types';
+import { sagaPath, withBase } from '../lib/paths';
+
+interface Props {
+  saga: Saga;
+}
+
+const { saga } = Astro.props;
+const href = sagaPath(saga.id);
+---
+
+<li class="card">
+  {
+    saga.data.image && (
+      <img
+        class="card-media"
+        src={withBase(saga.data.image.replace(/^\/+/, ''))}
+        alt={saga.data.imageAlt ?? ''}
+        width="640"
+        height="360"
+        loading="lazy"
+        decoding="async"
+      />
+    )
+  }
+  <h3><a href={href}>{saga.data.title}</a></h3>
+  <p>{saga.data.summary}</p>
+  {
+    saga.data.tags.length > 0 && (
+      <ul class="tag-list" aria-label="Tags">
+        {saga.data.tags.map((tag) => (
+          <li>{tag}</li>
+        ))}
+      </ul>
+    )
+  }
+</li>

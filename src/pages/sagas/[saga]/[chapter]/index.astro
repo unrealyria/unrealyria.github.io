@@ -1,0 +1,128 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { content } from '../../../../lib/cms';
+import { chapterPath, chapterSlug, sagaPath } from '../../../../lib/paths';
+import { SITE } from '../../../../lib/site';
+
+export async function getStaticPaths() {
+  const chapters = await content.getAllChapters();
+  return chapters.map((chapter) => ({
+    params: {
+      saga: chapter.data.saga.id,
+      chapter: chapterSlug(chapter.id),
+    },
+  }));
+}
+
+const { saga: sagaId, chapter: slug } = Astro.params;
+const saga = sagaId ? await content.getSaga(sagaId) : undefined;
+const chapter = sagaId && slug ? await content.getChapter(sagaId, slug) : undefined;
+
+if (!saga || !chapter) {
+  throw new Error(`Unknown or unpublished chapter: ${sagaId ?? '(none)'}/${slug ?? '(none)'}`);
+}
+
+const { Content } = await render(chapter);
+const storyFiles = await content.getStoryFiles(chapter.id);
+const renderedStories = await Promise.all(
+  storyFiles.map(async (file) => ({ file, Content: (await render(file)).Content })),
+);
+
+const sagaChapters = await content.getChapters(saga.id);
+const index = sagaChapters.findIndex((entry) => entry.id === chapter.id);
+const previous = index > 0 ? sagaChapters[index - 1] : undefined;
+const next = index >= 0 && index < sagaChapters.length - 1 ? sagaChapters[index + 1] : undefined;
+
+const chapterUrl = chapterPath(saga.id, chapterSlug(chapter.id));
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Chapter',
+  name: chapter.data.title,
+  description: chapter.data.summary,
+  position: chapter.data.number,
+  isPartOf: { '@type': 'Book', name: saga.data.title },
+  url: new URL(Astro.url.pathname, Astro.site ?? SITE.url).href,
+};
+---
+
+<BaseLayout
+  title={`Chapter ${chapter.data.number}: ${chapter.data.title}`}
+  description={chapter.data.summary}
+  theme={saga.data.theme}
+  image={chapter.data.image ?? saga.data.image}
+  type="article"
+  jsonLd={jsonLd}
+>
+  <article>
+    <header class="saga-header">
+      <div class="wrap">
+        <p class="eyebrow">
+          <a href={sagaPath(saga.id)}>{saga.data.title}</a>
+        </p>
+        <h1>Chapter {chapter.data.number}: {chapter.data.title}</h1>
+        <p class="summary">{chapter.data.summary}</p>
+        <p class="meta">
+          {chapter.data.publishedAt && (
+            <time datetime={chapter.data.publishedAt.toISOString()}>
+              {chapter.data.publishedAt.toLocaleDateString('en', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </time>
+          )}
+        </p>
+      </div>
+    </header>
+
+    <div class="section">
+      <div class="wrap">
+        <div class="prose">
+          <Content />
+        </div>
+
+        {
+          renderedStories.length > 0 && (
+            <section class="story" aria-labelledby="story-heading">
+              <h2 id="story-heading">Story files</h2>
+              {renderedStories.map(({ file, Content: StoryContent }) => (
+                <article>
+                  <h3>{file.data.title}</h3>
+                  <div class="prose">
+                    <StoryContent />
+                  </div>
+                </article>
+              ))}
+            </section>
+          )
+        }
+
+        <nav class="chapter-nav" aria-label="Chapter navigation">
+          {
+            previous ? (
+              <a href={chapterPath(saga.id, chapterSlug(previous.id))} rel="prev">
+                ← Chapter {previous.data.number}: {previous.data.title}
+              </a>
+            ) : (
+              <span />
+            )
+          }
+          {
+            next ? (
+              <a href={chapterPath(saga.id, chapterSlug(next.id))} rel="next">
+                Chapter {next.data.number}: {next.data.title} →
+              </a>
+            ) : (
+              <span />
+            )
+          }
+        </nav>
+
+        <p class="meta">
+          <a href={chapterUrl}>Permalink</a> · <a href={sagaPath(saga.id)}>Back to {saga.data.title}</a>
+        </p>
+      </div>
+    </div>
+  </article>
+</BaseLayout>

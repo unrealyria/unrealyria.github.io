@@ -1,0 +1,30 @@
+---
+import SagaCard from '../../components/SagaCard.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { content } from '../../lib/cms';
+
+const sagas = await content.getSagas();
+---
+
+<BaseLayout
+  title="Sagas"
+  description="Browse every published saga in the UnreaLyria universe."
+>
+  <section class="section" aria-labelledby="sagas-heading">
+    <div class="wrap">
+      <p class="eyebrow">The library</p>
+      <h1 id="sagas-heading">Sagas</h1>
+      {
+        sagas.length === 0 ? (
+          <p class="empty">No sagas are published yet.</p>
+        ) : (
+          <ul class="card-grid">
+            {sagas.map((saga) => (
+              <SagaCard saga={saga} />
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

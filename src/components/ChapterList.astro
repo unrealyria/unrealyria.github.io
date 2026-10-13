@@ -1,0 +1,33 @@
+---
+import type { Chapter } from '../lib/cms/types';
+import { chapterPath, chapterSlug } from '../lib/paths';
+
+interface Props {
+  chapters: Chapter[];
+  sagaId: string;
+}
+
+const { chapters, sagaId } = Astro.props;
+---
+
+{
+  chapters.length === 0 ? (
+    <p class="empty">No chapters are available yet.</p>
+  ) : (
+    <ol class="chapter-list">
+      {chapters.map((chapter) => (
+        <li>
+          <a href={chapterPath(sagaId, chapterSlug(chapter.id))}>
+            <span class="chapter-number" aria-hidden="true">
+              {String(chapter.data.number).padStart(2, '0')}
+            </span>
+            <span>
+              <strong>Chapter {chapter.data.number}: {chapter.data.title}</strong>
+              <span class="chapter-summary">{chapter.data.summary}</span>
+            </span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  )
+}

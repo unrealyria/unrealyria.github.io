@@ -1,0 +1,113 @@
+---
+import ChapterList from '../../../components/ChapterList.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { content } from '../../../lib/cms';
+import { withBase } from '../../../lib/paths';
+import { SITE } from '../../../lib/site';
+
+export async function getStaticPaths() {
+  const sagas = await content.getSagas();
+  return sagas.map((saga) => ({ params: { saga: saga.id } }));
+}
+
+const { saga: sagaId } = Astro.params;
+const saga = sagaId ? await content.getSaga(sagaId) : undefined;
+
+if (!saga) {
+  throw new Error(`Unknown or unpublished saga: ${sagaId ?? '(none)'}`);
+}
+
+const chapters = await content.getChapters(saga.id);
+const lore = await content.getLore(saga.id);
+const music = await content.getMusic(saga.id);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Book',
+  name: saga.data.title,
+  description: saga.data.summary,
+  url: new URL(Astro.url.pathname, Astro.site ?? SITE.url).href,
+};
+---
+
+<BaseLayout
+  title={saga.data.title}
+  description={saga.data.summary}
+  theme={saga.data.theme}
+  image={saga.data.image}
+  type="book"
+  jsonLd={jsonLd}
+>
+  <header class="saga-header">
+    <div class="wrap">
+      <p class="eyebrow"><a href={withBase('sagas/')}>Sagas</a></p>
+      <h1>{saga.data.title}</h1>
+      <p class="summary">{saga.data.summary}</p>
+      {
+        saga.data.tags.length > 0 && (
+          <ul class="tag-list" aria-label="Tags">
+            {saga.data.tags.map((tag) => (
+              <li>{tag}</li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </header>
+
+  <section class="section" aria-labelledby="chapters-heading">
+    <div class="wrap">
+      <h2 id="chapters-heading">Chapters</h2>
+      <ChapterList chapters={chapters} sagaId={saga.id} />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="extras-heading">
+    <div class="wrap">
+      <h2 id="extras-heading">Lore &amp; music</h2>
+      <div class="collections">
+        <div class="collection">
+          <h2>Lore</h2>
+          {
+            lore.length === 0 ? (
+              <p class="empty">No lore entries yet.</p>
+            ) : (
+              <ul>
+                {lore.map((entry) => (
+                  <li>
+                    <strong>{entry.data.title}</strong>
+                    <p>{entry.data.summary}</p>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </div>
+        <div class="collection">
+          <h2>Music</h2>
+          {
+            music.length === 0 ? (
+              <p class="empty">No music yet.</p>
+            ) : (
+              <ul>
+                {music.map((track) => (
+                  <li>
+                    <strong>{track.data.title}</strong>
+                    <p>
+                      {track.data.mood ? `${track.data.mood} · ` : ''}
+                      {track.data.audioUrl ? (
+                        <a href={track.data.audioUrl}>Listen</a>
+                      ) : (
+                        'Audio coming soon'
+                      )}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

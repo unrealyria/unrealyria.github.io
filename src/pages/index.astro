@@ -1,0 +1,45 @@
+---
+import SagaCard from '../components/SagaCard.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { content } from '../lib/cms';
+import { withBase } from '../lib/paths';
+import { SITE } from '../lib/site';
+
+const sagas = await content.getSagas();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.name,
+  url: SITE.url,
+  description: SITE.description,
+};
+---
+
+<BaseLayout jsonLd={jsonLd}>
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">A multi-saga story universe</p>
+      <h1>Stories that render only while you watch.</h1>
+      <p class="lede">{SITE.description}</p>
+      <a class="btn" href={withBase('sagas/')}>Explore the sagas</a>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="sagas-heading">
+    <div class="wrap">
+      <h2 id="sagas-heading">Sagas</h2>
+      {
+        sagas.length === 0 ? (
+          <p class="empty">No sagas are published yet.</p>
+        ) : (
+          <ul class="card-grid">
+            {sagas.map((saga) => (
+              <SagaCard saga={saga} />
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

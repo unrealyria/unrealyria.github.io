@@ -1,0 +1,59 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import { SITE } from '../lib/site';
+import { themeToCssVars, type SagaTheme } from '../lib/theme';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  theme?: SagaTheme;
+  image?: string;
+  type?: 'website' | 'article' | 'book';
+  noindex?: boolean;
+  lang?: string;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const {
+  title = SITE.title,
+  description = SITE.description,
+  theme,
+  image,
+  type = 'website',
+  noindex = false,
+  lang = Astro.currentLocale ?? SITE.defaultLocale,
+  jsonLd,
+} = Astro.props;
+
+const documentTitle = title === SITE.name ? SITE.name : `${title} · ${SITE.name}`;
+const styleVars = theme ? themeToCssVars(theme) : undefined;
+---
+
+<!doctype html>
+<html lang={lang} style={styleVars}>
+  <head>
+    <BaseHead
+      title={documentTitle}
+      description={description}
+      image={image}
+      type={type}
+      noindex={noindex}
+    />
+    {
+      jsonLd && (
+        <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+      )
+    }
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <SiteHeader />
+    <main id="main">
+      <slot />
+    </main>
+    <SiteFooter />
+  </body>
+</html>
