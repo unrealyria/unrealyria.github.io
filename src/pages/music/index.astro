@@ -1,0 +1,75 @@
+---
+import ContentTeaser from '../../components/ContentTeaser.astro';
+import EmptyState from '../../components/EmptyState.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { content } from '../../lib/cms';
+import { sagaPath } from '../../lib/paths';
+
+const sagas = await content.getSagas();
+const sagaIndex = new Map(sagas.map((saga) => [saga.id, saga]));
+const tracks = await content.getAllMusic();
+
+function formatDuration(seconds?: number): string | undefined {
+  if (!seconds) {
+    return undefined;
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return `${minutes}:${String(remainder).padStart(2, '0')}`;
+}
+
+const items = tracks.map((track) => {
+  const saga = track.data.saga ? sagaIndex.get(track.data.saga.id) : undefined;
+  const meta = [track.data.credits, track.data.mood, formatDuration(track.data.durationSeconds)]
+    .filter(Boolean)
+    .join(' · ');
+  return {
+    key: track.id,
+    kind: 'Track',
+    title: track.data.title,
+    description: track.data.audioUrl ? 'Audio available' : undefined,
+    meta: meta || undefined,
+    href: saga ? sagaPath(saga.id) : undefined,
+  };
+});
+---
+
+<BaseLayout
+  title="Music"
+  description="Music from the published sagas of the UnreaLyria universe."
+>
+  <section class="section">
+    <div class="container">
+      <header class="page-head">
+        <p class="eyebrow">Soundtrack</p>
+        <h1 class="page-head__title display">Music</h1>
+        <p class="lede">
+          Music associated with the published sagas. Audio players will follow once releases are
+          approved.
+        </p>
+      </header>
+
+      {
+        items.length === 0 ? (
+          <EmptyState
+            kind="music"
+            title="No music yet"
+            description="Compositions appear here once a saga's music is approved for release."
+          />
+        ) : (
+          <ul class="grid-teasers">
+            {items.map((item) => (
+              <ContentTeaser
+                kind={item.kind}
+                title={item.title}
+                description={item.description}
+                meta={item.meta}
+                href={item.href}
+              />
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

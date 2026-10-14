@@ -8,7 +8,9 @@ status: published
 locale: en
 publishedAt: 2026-01-15
 image: /placeholder.svg
-imageAlt: Neutral placeholder artwork for Chapter 01 — Welcome World.
+imageAlt: Neutral landscape artwork placeholder for Chapter 01 — Welcome World.
+imagePortrait: /placeholder-portrait.svg
+imagePortraitAlt: Neutral portrait artwork placeholder for Chapter 01 — Welcome World.
 ---
 
 ## Log entry, unnumbered

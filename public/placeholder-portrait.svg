@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1080" viewBox="0 0 720 1080" role="img" aria-label="Neutral portrait placeholder artwork">
+  <defs>
+    <linearGradient id="pbg" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#0a0a14" />
+      <stop offset="1" stop-color="#1a1a2e" />
+    </linearGradient>
+    <pattern id="pgrid" width="72" height="72" patternUnits="userSpaceOnUse">
+      <path d="M72 0H0V72" fill="none" stroke="#7c5cff" stroke-opacity="0.12" stroke-width="1" />
+    </pattern>
+  </defs>
+  <rect width="720" height="1080" fill="url(#pbg)" />
+  <rect width="720" height="1080" fill="url(#pgrid)" />
+  <circle cx="360" cy="470" r="150" fill="none" stroke="#38d6b0" stroke-opacity="0.5" stroke-width="2" />
+  <circle cx="360" cy="470" r="96" fill="none" stroke="#7c5cff" stroke-opacity="0.7" stroke-width="2" />
+  <path d="M360 300v340M190 470h340" stroke="#ececf5" stroke-opacity="0.22" stroke-width="2" />
+  <text x="360" y="880" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="30" fill="#ececf5" fill-opacity="0.85" letter-spacing="6">UNREALYRIA</text>
+  <text x="360" y="922" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" fill="#9a9aba" letter-spacing="4">NEUTRAL PORTRAIT PLACEHOLDER</text>
+</svg>

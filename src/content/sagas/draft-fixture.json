@@ -1,0 +1,18 @@
+{
+  "title": "Draft Fixture",
+  "shortTitle": "Fixture",
+  "summary": "Non-canonical, internal placeholder entry used only to verify that unpublished sagas never appear in the built site, sitemap, metadata or navigation. It is not part of the UnreaLyria universe.",
+  "order": 999,
+  "status": "draft",
+  "locale": "en",
+  "featured": false,
+  "tags": [],
+  "theme": {
+    "primary": "#6b7280",
+    "accent": "#9ca3af",
+    "background": "#0b0b0f",
+    "surface": "#16161c",
+    "text": "#e5e7eb",
+    "muted": "#9ca3af"
+  }
+}

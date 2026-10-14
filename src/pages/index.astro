@@ -1,11 +1,22 @@
 ---
-import SagaCard from '../components/SagaCard.astro';
+import ChapterCard from '../components/ChapterCard.astro';
+import ContentTeaser from '../components/ContentTeaser.astro';
+import Hero from '../components/Hero.astro';
+import SagaFeature from '../components/SagaFeature.astro';
+import SectionHeading from '../components/SectionHeading.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { content } from '../lib/cms';
-import { withBase } from '../lib/paths';
-import { SITE } from '../lib/site';
+import { musicPath, sagaPath, sagasPath, storiesPath } from '../lib/paths';
+import { HOME_HERO_ART, SITE } from '../lib/site';
 
 const sagas = await content.getSagas();
+const featured = sagas.find((saga) => saga.data.featured) ?? sagas[0];
+
+const chapters = await content.getAllChapters();
+const entryChapter = chapters.length > 0 ? chapters[chapters.length - 1] : undefined;
+
+const storyFiles = (await content.getAllStoryFiles()).slice(0, 4);
+const music = (await content.getAllMusic()).slice(0, 4);
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -17,29 +28,87 @@ const jsonLd = {
 ---
 
 <BaseLayout jsonLd={jsonLd}>
-  <section class="hero">
-    <div class="wrap">
-      <p class="eyebrow">A multi-saga story universe</p>
-      <h1>Stories that render only while you watch.</h1>
-      <p class="lede">{SITE.description}</p>
-      <a class="btn" href={withBase('sagas/')}>Explore the sagas</a>
-    </div>
-  </section>
-
-  <section class="section" aria-labelledby="sagas-heading">
-    <div class="wrap">
-      <h2 id="sagas-heading">Sagas</h2>
+  <Hero
+    variant="cinematic"
+    eyebrow="An original narrative universe"
+    title={SITE.name}
+    tagline={SITE.tagline}
+    image={HOME_HERO_ART.image}
+    imageAlt={HOME_HERO_ART.imageAlt}
+  >
+    <Fragment slot="actions">
       {
-        sagas.length === 0 ? (
-          <p class="empty">No sagas are published yet.</p>
-        ) : (
-          <ul class="card-grid">
-            {sagas.map((saga) => (
-              <SagaCard saga={saga} />
-            ))}
-          </ul>
+        featured && (
+          <a class="btn btn--primary btn--lg" href={sagaPath(featured.id)}>
+            Enter the saga <span class="btn__arrow" aria-hidden="true">→</span>
+          </a>
         )
       }
-    </div>
-  </section>
+      <a class="btn btn--ghost" href={sagasPath()}>Browse sagas</a>
+    </Fragment>
+  </Hero>
+
+  {featured && <SagaFeature saga={featured} chapter={entryChapter} eyebrow="The premiere" priority />}
+
+  {
+    entryChapter && featured && (
+      <section class="section section--tight" aria-labelledby="entry-heading">
+        <div class="container">
+          <SectionHeading
+            eyebrow="Now reading"
+            title="Begin the story"
+            id="entry-heading"
+            link={{ href: sagaPath(featured.id), label: 'All chapters' }}
+          />
+          <ol class="chapter-list">
+            <ChapterCard chapter={entryChapter} sagaId={featured.id} first />
+          </ol>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    storyFiles.length > 0 && (
+      <section class="section section--tight" aria-labelledby="stories-heading">
+        <div class="container">
+          <SectionHeading
+            eyebrow="Story files"
+            title="From the archive"
+            id="stories-heading"
+            link={{ href: storiesPath(), label: 'All stories' }}
+          />
+          <ul class="grid-teasers">
+            {storyFiles.map((file) => (
+              <ContentTeaser
+                kind="Story file"
+                title={file.data.title}
+                description={file.data.summary}
+              />
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    music.length > 0 && (
+      <section class="section section--tight" aria-labelledby="music-heading">
+        <div class="container">
+          <SectionHeading
+            eyebrow="Music"
+            title="The sound of the world"
+            id="music-heading"
+            link={{ href: musicPath(), label: 'All music' }}
+          />
+          <ul class="grid-teasers">
+            {music.map((track) => (
+              <ContentTeaser kind="Track" title={track.data.title} meta={track.data.credits} />
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
 </BaseLayout>

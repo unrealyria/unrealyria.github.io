@@ -5,9 +5,12 @@
   "order": 1,
   "status": "published",
   "locale": "en",
+  "featured": true,
   "tags": ["virtual-world", "lyria", "science-fantasy"],
   "image": "/placeholder.svg",
-  "imageAlt": "Neutral placeholder artwork for The Virtual World Saga.",
+  "imageAlt": "Neutral landscape artwork placeholder for The Virtual World Saga.",
+  "imagePortrait": "/placeholder-portrait.svg",
+  "imagePortraitAlt": "Neutral portrait artwork placeholder for The Virtual World Saga.",
   "theme": {
     "primary": "#7c5cff",
     "accent": "#38d6b0",

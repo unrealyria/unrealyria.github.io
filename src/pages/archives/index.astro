@@ -1,0 +1,64 @@
+---
+import ContentTeaser from '../../components/ContentTeaser.astro';
+import EmptyState from '../../components/EmptyState.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { content } from '../../lib/cms';
+import { sagaPath } from '../../lib/paths';
+
+const sagas = await content.getSagas();
+const sagaIndex = new Map(sagas.map((saga) => [saga.id, saga]));
+const lore = await content.getAllLore();
+
+const items = lore.map((entry) => {
+  const saga = entry.data.saga ? sagaIndex.get(entry.data.saga.id) : undefined;
+  const category = entry.data.category;
+  return {
+    key: entry.id,
+    kind: category.charAt(0).toUpperCase() + category.slice(1),
+    title: entry.data.title,
+    description: entry.data.summary,
+    meta: saga?.data.title,
+    href: saga ? sagaPath(saga.id) : undefined,
+  };
+});
+---
+
+<BaseLayout
+  title="Archives"
+  description="Lore entries from the published sagas of the UnreaLyria universe."
+>
+  <section class="section">
+    <div class="container">
+      <header class="page-head">
+        <p class="eyebrow">Lore</p>
+        <h1 class="page-head__title display">Archives</h1>
+        <p class="lede">
+          Published lore entries from across the universe, grouped by saga. More entries are added
+          as they are approved.
+        </p>
+      </header>
+
+      {
+        items.length === 0 ? (
+          <EmptyState
+            kind="archives"
+            title="No lore entries yet"
+            description="Archive entries appear here as the universe's world, characters and terms are documented."
+          />
+        ) : (
+          <ul class="grid-teasers">
+            {items.map((item) => (
+              <ContentTeaser
+                kind={item.kind}
+                title={item.title}
+                description={item.description}
+                meta={item.meta}
+                href={item.href}
+              />
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>

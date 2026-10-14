@@ -1,0 +1,139 @@
+---
+import type { Chapter } from '../lib/cms/types';
+import { chapterPath, chapterSlug } from '../lib/paths';
+
+interface Props {
+  chapter: Chapter;
+  sagaId: string;
+  first?: boolean;
+}
+
+const { chapter, sagaId, first = false } = Astro.props;
+const number = String(chapter.data.number).padStart(2, '0');
+const publishedAt = chapter.data.publishedAt;
+---
+
+<li class:list={['chapter-card', first && 'chapter-card--first']}>
+  <a class="chapter-card__link" href={chapterPath(sagaId, chapterSlug(chapter.id))}>
+    <span class="chapter-card__num" aria-hidden="true">{number}</span>
+    <span class="chapter-card__body">
+      <span class="chapter-card__meta">
+        <span class="chapter-card__label">Chapter {chapter.data.number}</span>
+        {first && <span class="chapter-card__badge">Start here</span>}
+      </span>
+      <span class="chapter-card__title display">{chapter.data.title}</span>
+      <span class="chapter-card__summary">{chapter.data.summary}</span>
+    </span>
+    {
+      publishedAt && (
+        <time class="chapter-card__date" datetime={publishedAt.toISOString()}>
+          {publishedAt.toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })}
+        </time>
+      )
+    }
+    <span class="chapter-card__arrow" aria-hidden="true">→</span>
+  </a>
+</li>
+
+<style>
+  .chapter-card__link {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--gradient-surface);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      box-shadow var(--dur) var(--ease);
+  }
+
+  .chapter-card--first .chapter-card__link {
+    border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 18%, transparent);
+  }
+
+  .chapter-card__link:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+    box-shadow: var(--shadow-md);
+  }
+
+  .chapter-card__num {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, var(--color-accent) 80%, var(--color-text));
+    line-height: 1;
+  }
+
+  .chapter-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .chapter-card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .chapter-card__label {
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .chapter-card__badge {
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
+    color: color-mix(in srgb, var(--color-accent) 75%, var(--color-text));
+    font-size: 0.62rem;
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .chapter-card__title {
+    font-size: var(--step-1);
+  }
+
+  .chapter-card__summary {
+    color: var(--color-muted);
+    font-size: var(--step--1);
+  }
+
+  .chapter-card__date {
+    font-size: var(--step--1);
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+
+  .chapter-card__arrow {
+    color: var(--color-accent);
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .chapter-card__link:hover .chapter-card__arrow {
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 40rem) {
+    .chapter-card__link {
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .chapter-card__date,
+    .chapter-card__arrow {
+      display: none;
+    }
+  }
+</style>

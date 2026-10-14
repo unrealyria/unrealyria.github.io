@@ -26,9 +26,12 @@ const sagas = defineCollection({
     order: z.number().int().nonnegative(),
     status: statusSchema,
     locale: localeSchema,
+    featured: z.boolean().default(false),
     tags: z.array(z.string()).default([]),
     image: z.string().optional(),
     imageAlt: z.string().optional(),
+    imagePortrait: z.string().optional(),
+    imagePortraitAlt: z.string().optional(),
     theme: themeSchema,
   }),
 });
@@ -46,6 +49,11 @@ const chapters = defineCollection({
     publishedAt: z.coerce.date().optional(),
     image: z.string().optional(),
     imageAlt: z.string().optional(),
+    imagePortrait: z.string().optional(),
+    imagePortraitAlt: z.string().optional(),
+    panels: z
+      .array(z.object({ src: z.string(), alt: z.string() }))
+      .default([]),
   }),
 });
 

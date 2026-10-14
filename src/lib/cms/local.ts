@@ -12,6 +12,17 @@ async function publishedChapters(): Promise<Chapter[]> {
   return entries.sort((a, b) => a.data.number - b.data.number || a.data.order - b.data.order);
 }
 
+async function publishedSagaIds(): Promise<Set<string>> {
+  const sagas = await publishedSagas();
+  return new Set(sagas.map((saga) => saga.id));
+}
+
+// chapter id -> owning saga id, restricted to published chapters.
+async function publishedChapterSagas(): Promise<Map<string, string>> {
+  const chapters = await publishedChapters();
+  return new Map(chapters.map((chapter) => [chapter.id, chapter.data.saga.id]));
+}
+
 async function chaptersForSaga(sagaId: string): Promise<Chapter[]> {
   const sagas = await publishedSagas();
   if (!sagas.some((saga) => saga.id === sagaId)) {
@@ -19,6 +30,17 @@ async function chaptersForSaga(sagaId: string): Promise<Chapter[]> {
   }
   const chapters = await publishedChapters();
   return chapters.filter((chapter) => chapter.data.saga.id === sagaId);
+}
+
+async function storyFilesForChapterIds(chapterIds: Set<string>): Promise<StoryFile[]> {
+  if (chapterIds.size === 0) {
+    return [];
+  }
+  const entries = await getCollection(
+    'story',
+    ({ data }) => data.status === 'published' && chapterIds.has(data.chapter.id),
+  );
+  return entries.sort((a, b) => a.data.order - b.data.order);
 }
 
 export const localContentSource: ContentSource = {
@@ -36,10 +58,9 @@ export const localContentSource: ContentSource = {
   },
 
   async getAllChapters() {
-    const sagas = await publishedSagas();
-    const publishedIds = new Set(sagas.map((saga) => saga.id));
+    const sagaIds = await publishedSagaIds();
     const chapters = await publishedChapters();
-    return chapters.filter((chapter) => publishedIds.has(chapter.data.saga.id));
+    return chapters.filter((chapter) => sagaIds.has(chapter.data.saga.id));
   },
 
   async getChapter(sagaId, slug) {
@@ -48,31 +69,86 @@ export const localContentSource: ContentSource = {
   },
 
   async getStoryFiles(chapterId) {
-    const entries = await getCollection(
-      'story',
-      ({ data }) => data.status === 'published' && data.chapter.id === chapterId,
+    const chapterSagas = await publishedChapterSagas();
+    if (!chapterSagas.has(chapterId)) {
+      return [];
+    }
+    return storyFilesForChapterIds(new Set([chapterId]));
+  },
+
+  async getStoryFilesBySaga(sagaId) {
+    const sagaIds = await publishedSagaIds();
+    if (!sagaIds.has(sagaId)) {
+      return [];
+    }
+    const chapterSagas = await publishedChapterSagas();
+    const chapterIds = new Set(
+      [...chapterSagas.entries()]
+        .filter(([, owner]) => owner === sagaId)
+        .map(([chapterId]) => chapterId),
     );
-    return entries.sort((a, b) => a.data.order - b.data.order);
+    return storyFilesForChapterIds(chapterIds);
+  },
+
+  async getAllStoryFiles() {
+    const sagaIds = await publishedSagaIds();
+    const chapterSagas = await publishedChapterSagas();
+    const chapterIds = new Set(
+      [...chapterSagas.entries()]
+        .filter(([, owner]) => sagaIds.has(owner))
+        .map(([chapterId]) => chapterId),
+    );
+    return storyFilesForChapterIds(chapterIds);
   },
 
   async getLore(sagaId) {
+    const sagaIds = await publishedSagaIds();
+    if (sagaId && !sagaIds.has(sagaId)) {
+      return [];
+    }
     const entries = await getCollection('lore', ({ data }) => {
       if (data.status !== 'published') {
         return false;
       }
-      return sagaId ? data.saga?.id === sagaId : true;
+      if (!data.saga) {
+        return !sagaId;
+      }
+      return sagaId ? data.saga.id === sagaId : sagaIds.has(data.saga.id);
     });
     return entries.sort((a, b) => a.data.title.localeCompare(b.data.title));
   },
 
+  async getAllLore() {
+    const sagaIds = await publishedSagaIds();
+    const entries = await getCollection('lore', ({ data }) => data.status === 'published');
+    return entries
+      .filter((entry) => !entry.data.saga || sagaIds.has(entry.data.saga.id))
+      .sort((a, b) => a.data.title.localeCompare(b.data.title));
+  },
+
   async getMusic(sagaId) {
+    const sagaIds = await publishedSagaIds();
+    if (sagaId && !sagaIds.has(sagaId)) {
+      return [];
+    }
     const entries = await getCollection('music', ({ data }) => {
       if (data.status !== 'published') {
         return false;
       }
-      return sagaId ? data.saga?.id === sagaId : true;
+      if (!data.saga) {
+        return !sagaId;
+      }
+      return sagaId ? data.saga.id === sagaId : sagaIds.has(data.saga.id);
     });
     return entries.sort((a, b) => a.data.title.localeCompare(b.data.title));
+  },
+
+  async getAllMusic() {
+    const sagaIds = await publishedSagaIds();
+    const entries = await getCollection('music', ({ data }) => data.status === 'published');
+    return entries
+      .filter((entry) => !entry.data.saga || sagaIds.has(entry.data.saga.id))
+      .sort((a, b) => a.data.title.localeCompare(b.data.title));
   },
 };
 

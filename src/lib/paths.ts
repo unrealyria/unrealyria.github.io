@@ -4,12 +4,32 @@ export function withBase(path = ''): string {
   return `${base}${path.replace(/^\/+/, '')}`;
 }
 
+export function homePath(): string {
+  return withBase('');
+}
+
+export function sagasPath(): string {
+  return withBase('sagas/');
+}
+
 export function sagaPath(sagaId: string): string {
   return withBase(`sagas/${sagaId}/`);
 }
 
 export function chapterPath(sagaId: string, chapterSlug: string): string {
   return withBase(`sagas/${sagaId}/${chapterSlug}/`);
+}
+
+export function storiesPath(): string {
+  return withBase('stories/');
+}
+
+export function musicPath(): string {
+  return withBase('music/');
+}
+
+export function archivesPath(): string {
+  return withBase('archives/');
 }
 
 export function chapterSlug(chapterId: string): string {
@@ -22,4 +42,10 @@ export function normalizePath(pathname: string): string {
     return pathname.slice(0, -1);
   }
   return pathname;
+}
+
+export function isActive(current: string, target: string): boolean {
+  const path = normalizePath(current);
+  const root = normalizePath(target);
+  return path === root || path.startsWith(`${root}/`);
 }

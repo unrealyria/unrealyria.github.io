@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { withBase } from '../lib/paths';
+import { homePath, sagasPath } from '../lib/paths';
 ---
 
 <BaseLayout
@@ -9,14 +9,27 @@ import { withBase } from '../lib/paths';
   noindex
 >
   <section class="section">
-    <div class="wrap">
-      <p class="eyebrow">Error 404</p>
-      <h1>This page is not part of the world.</h1>
-      <p class="lede">
-        The page you requested could not be found. It may be unpublished, moved, or never have
-        existed.
-      </p>
-      <a class="btn" href={withBase('')}>Back to home</a>
+    <div class="container">
+      <header class="page-head">
+        <p class="eyebrow">Error 404</p>
+        <h1 class="page-head__title display">This page is not part of the world.</h1>
+        <p class="lede">
+          The page you requested could not be found. It may be unpublished, moved, or never have
+          existed.
+        </p>
+      </header>
+      <div class="actions">
+        <a class="btn btn--primary" href={homePath()}>Back to home</a>
+        <a class="btn btn--ghost" href={sagasPath()}>Browse sagas</a>
+      </div>
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+</style>

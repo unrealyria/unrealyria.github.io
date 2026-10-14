@@ -1,6 +1,8 @@
 ---
+import Artwork from './Artwork.astro';
 import type { Saga } from '../lib/cms/types';
-import { sagaPath, withBase } from '../lib/paths';
+import { sagaPath } from '../lib/paths';
+import { themeToCssVars } from '../lib/theme';
 
 interface Props {
   saga: Saga;
@@ -8,31 +10,100 @@ interface Props {
 
 const { saga } = Astro.props;
 const href = sagaPath(saga.id);
+const alt = saga.data.imageAlt ?? `Neutral artwork placeholder for ${saga.data.title}.`;
 ---
 
-<li class="card">
-  {
-    saga.data.image && (
-      <img
-        class="card-media"
-        src={withBase(saga.data.image.replace(/^\/+/, ''))}
-        alt={saga.data.imageAlt ?? ''}
-        width="640"
-        height="360"
-        loading="lazy"
-        decoding="async"
-      />
-    )
-  }
-  <h3><a href={href}>{saga.data.title}</a></h3>
-  <p>{saga.data.summary}</p>
-  {
-    saga.data.tags.length > 0 && (
-      <ul class="tag-list" aria-label="Tags">
-        {saga.data.tags.map((tag) => (
-          <li>{tag}</li>
-        ))}
-      </ul>
-    )
-  }
+<li class="saga-card" style={themeToCssVars(saga.data.theme)}>
+  <a class="saga-card__link" href={href}>
+    <Artwork
+      class="saga-card__art"
+      src={saga.data.image}
+      alt={alt}
+      ratio="16:9"
+      label="Saga key art · 16:9"
+    />
+    <div class="saga-card__body">
+      <p class="saga-card__eyebrow">Saga</p>
+      <h3 class="saga-card__title display">{saga.data.title}</h3>
+      <p class="saga-card__summary">{saga.data.summary}</p>
+      <span class="saga-card__cta">
+        Enter saga <span class="saga-card__arrow" aria-hidden="true">→</span>
+      </span>
+    </div>
+  </a>
 </li>
+
+<style>
+  .saga-card {
+    display: flex;
+  }
+
+  .saga-card__link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 100%;
+    padding: var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--gradient-surface);
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      box-shadow var(--dur) var(--ease);
+  }
+
+  .saga-card__link:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+    box-shadow: var(--shadow-lg), 0 0 0 1px color-mix(in srgb, var(--color-primary) 30%, transparent);
+  }
+
+  .saga-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: 0 var(--space-xs) var(--space-xs);
+    flex: 1;
+  }
+
+  .saga-card__eyebrow {
+    margin: 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+
+  .saga-card__title {
+    margin: 0;
+    font-size: var(--step-2);
+  }
+
+  .saga-card__summary {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: var(--step--1);
+  }
+
+  .saga-card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: auto;
+    padding-top: var(--space-sm);
+    font-size: var(--step--1);
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    color: var(--color-text);
+  }
+
+  .saga-card__arrow {
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .saga-card__link:hover .saga-card__arrow {
+    transform: translateX(4px);
+  }
+</style>

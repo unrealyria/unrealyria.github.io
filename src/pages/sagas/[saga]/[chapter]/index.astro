@@ -1,8 +1,15 @@
 ---
 import { render } from 'astro:content';
+import ChapterPanels from '../../../../components/ChapterPanels.astro';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import { content } from '../../../../lib/cms';
-import { chapterPath, chapterSlug, sagaPath } from '../../../../lib/paths';
+import {
+  chapterPath,
+  chapterSlug,
+  homePath,
+  sagaPath,
+  sagasPath,
+} from '../../../../lib/paths';
 import { SITE } from '../../../../lib/site';
 
 export async function getStaticPaths() {
@@ -30,11 +37,15 @@ const renderedStories = await Promise.all(
 );
 
 const sagaChapters = await content.getChapters(saga.id);
-const index = sagaChapters.findIndex((entry) => entry.id === chapter.id);
-const previous = index > 0 ? sagaChapters[index - 1] : undefined;
-const next = index >= 0 && index < sagaChapters.length - 1 ? sagaChapters[index + 1] : undefined;
+const position = sagaChapters.findIndex((entry) => entry.id === chapter.id);
+const previous = position > 0 ? sagaChapters[position - 1] : undefined;
+const next =
+  position >= 0 && position < sagaChapters.length - 1 ? sagaChapters[position + 1] : undefined;
 
+const publishedAt = chapter.data.publishedAt;
+const chapterNumber = String(chapter.data.number).padStart(2, '0');
 const chapterUrl = chapterPath(saga.id, chapterSlug(chapter.id));
+
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Chapter',
@@ -55,74 +66,259 @@ const jsonLd = {
   jsonLd={jsonLd}
 >
   <article>
-    <header class="saga-header">
-      <div class="wrap">
-        <p class="eyebrow">
-          <a href={sagaPath(saga.id)}>{saga.data.title}</a>
-        </p>
-        <h1>Chapter {chapter.data.number}: {chapter.data.title}</h1>
-        <p class="summary">{chapter.data.summary}</p>
-        <p class="meta">
-          {chapter.data.publishedAt && (
-            <time datetime={chapter.data.publishedAt.toISOString()}>
-              {chapter.data.publishedAt.toLocaleDateString('en', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </time>
-          )}
-        </p>
+    <header class="reader-head">
+      <div class="container">
+        <div class="reader">
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <ol>
+              <li><a href={homePath()}>Home</a></li>
+              <li><a href={sagasPath()}>Sagas</a></li>
+              <li><a href={sagaPath(saga.id)}>{saga.data.title}</a></li>
+              <li aria-current="page">Chapter {chapter.data.number}</li>
+            </ol>
+          </nav>
+
+          <p class="reader-head__chapter">Chapter {chapterNumber}</p>
+          <h1 class="reader-head__title display">{chapter.data.title}</h1>
+          <p class="reader-head__summary">{chapter.data.summary}</p>
+
+          <p class="reader-head__meta">
+            <span>{saga.data.title}</span>
+            {
+              publishedAt && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <time datetime={publishedAt.toISOString()}>
+                    {publishedAt.toLocaleDateString('en', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </time>
+                </>
+              )
+            }
+          </p>
+        </div>
       </div>
     </header>
 
     <div class="section">
-      <div class="wrap">
-        <div class="prose">
-          <Content />
+      <div class="container">
+        <div class="reader">
+          <div class="prose">
+            <Content />
+          </div>
         </div>
+      </div>
 
-        {
-          renderedStories.length > 0 && (
-            <section class="story" aria-labelledby="story-heading">
-              <h2 id="story-heading">Story files</h2>
-              {renderedStories.map(({ file, Content: StoryContent }) => (
-                <article>
-                  <h3>{file.data.title}</h3>
-                  <div class="prose">
-                    <StoryContent />
-                  </div>
-                </article>
-              ))}
-            </section>
-          )
-        }
+      <ChapterPanels panels={chapter.data.panels} />
 
-        <nav class="chapter-nav" aria-label="Chapter navigation">
+      <div class="container">
+        <div class="reader">
           {
-            previous ? (
-              <a href={chapterPath(saga.id, chapterSlug(previous.id))} rel="prev">
-                ← Chapter {previous.data.number}: {previous.data.title}
-              </a>
-            ) : (
-              <span />
+            renderedStories.length > 0 && (
+              <section class="story" aria-labelledby="story-heading">
+                <h2 id="story-heading" class="story__heading">Story files</h2>
+                {renderedStories.map(({ file, Content: StoryContent }) => (
+                  <article class="story__item">
+                    <h3 class="story__title display">{file.data.title}</h3>
+                    <div class="prose">
+                      <StoryContent />
+                    </div>
+                  </article>
+                ))}
+              </section>
             )
           }
+
           {
-            next ? (
-              <a href={chapterPath(saga.id, chapterSlug(next.id))} rel="next">
-                Chapter {next.data.number}: {next.data.title} →
-              </a>
-            ) : (
-              <span />
+            (previous || next) && (
+              <nav class="chapter-nav" aria-label="Chapter navigation">
+                {previous ? (
+                  <a
+                    class="chapter-nav__link"
+                    href={chapterPath(saga.id, chapterSlug(previous.id))}
+                    rel="prev"
+                  >
+                    <span class="chapter-nav__dir">← Previous</span>
+                    <span class="chapter-nav__label">
+                      Chapter {previous.data.number}: {previous.data.title}
+                    </span>
+                  </a>
+                ) : (
+                  <span />
+                )}
+                {next ? (
+                  <a
+                    class="chapter-nav__link chapter-nav__link--next"
+                    href={chapterPath(saga.id, chapterSlug(next.id))}
+                    rel="next"
+                  >
+                    <span class="chapter-nav__dir">Next →</span>
+                    <span class="chapter-nav__label">
+                      Chapter {next.data.number}: {next.data.title}
+                    </span>
+                  </a>
+                ) : (
+                  <span />
+                )}
+              </nav>
             )
           }
-        </nav>
 
-        <p class="meta">
-          <a href={chapterUrl}>Permalink</a> · <a href={sagaPath(saga.id)}>Back to {saga.data.title}</a>
-        </p>
+          <p class="meta reader__foot">
+            <a href={chapterUrl}>Permalink</a> · <a href={sagaPath(saga.id)}>Back to {saga.data.title}</a>
+          </p>
+        </div>
       </div>
     </div>
   </article>
 </BaseLayout>
+
+<style>
+  .reader-head {
+    position: relative;
+    padding-block: clamp(2.5rem, 1.5rem + 5vw, 4.5rem);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .breadcrumb {
+    margin-bottom: var(--space-md);
+  }
+
+  .breadcrumb ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--step--1);
+    color: var(--color-muted);
+  }
+
+  .breadcrumb li:not(:last-child)::after {
+    content: "/";
+    margin-left: 0.4rem;
+    opacity: 0.5;
+  }
+
+  .breadcrumb a {
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-text);
+  }
+
+  .reader-head__chapter {
+    margin: 0 0 var(--space-2xs);
+    font-size: var(--step--1);
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+
+  .reader-head__title {
+    margin: 0 0 var(--space-sm);
+    font-size: var(--step-4);
+    max-width: 20ch;
+  }
+
+  .reader-head__summary {
+    margin: 0;
+    max-width: 46ch;
+    color: color-mix(in srgb, var(--color-text) 82%, var(--color-muted));
+    font-size: var(--step-1);
+    text-wrap: pretty;
+  }
+
+  .reader-head__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: var(--space-md) 0 0;
+    color: var(--color-muted);
+    font-size: var(--step--1);
+  }
+
+  .reader {
+    max-width: var(--measure);
+    margin-inline: auto;
+  }
+
+  .story {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .story__heading {
+    font-size: var(--step-2);
+  }
+
+  .story__item + .story__item {
+    margin-top: var(--space-xl);
+  }
+
+  .story__title {
+    font-size: var(--step-2);
+    color: var(--color-primary);
+  }
+
+  .chapter-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .chapter-nav__link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+
+  .chapter-nav__link:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+    transform: translateY(-2px);
+  }
+
+  .chapter-nav__link--next {
+    text-align: right;
+  }
+
+  .chapter-nav__dir {
+    font-size: var(--step--1);
+    color: var(--color-accent);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .chapter-nav__label {
+    font-size: var(--step--1);
+    color: var(--color-muted);
+  }
+
+  .reader__foot {
+    margin-top: var(--space-lg);
+  }
+
+  @media (max-width: 34rem) {
+    .chapter-nav {
+      flex-direction: column;
+    }
+  }
+</style>

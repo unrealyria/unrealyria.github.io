@@ -1,0 +1,90 @@
+---
+interface Props {
+  title: string;
+  kind?: string;
+  description?: string;
+  meta?: string;
+  href?: string;
+}
+
+const { title, kind, description, meta, href } = Astro.props;
+---
+
+<li class="teaser">
+  {
+    href ? (
+      <a class="teaser__surface teaser__surface--link" href={href}>
+        {kind && <span class="teaser__kind">{kind}</span>}
+        <span class="teaser__title display">{title}</span>
+        {description && <span class="teaser__desc">{description}</span>}
+        {meta && <span class="teaser__meta meta">{meta}</span>}
+        <span class="teaser__arrow" aria-hidden="true">
+          →
+        </span>
+      </a>
+    ) : (
+      <div class="teaser__surface">
+        {kind && <span class="teaser__kind">{kind}</span>}
+        <span class="teaser__title display">{title}</span>
+        {description && <span class="teaser__desc">{description}</span>}
+        {meta && <span class="teaser__meta meta">{meta}</span>}
+      </div>
+    )
+  }
+</li>
+
+<style>
+  .teaser {
+    display: flex;
+  }
+
+  .teaser__surface {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    width: 100%;
+    padding: var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--gradient-surface);
+  }
+
+  .teaser__surface--link {
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+
+  .teaser__surface--link:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  }
+
+  .teaser__kind {
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+
+  .teaser__title {
+    font-size: var(--step-1);
+  }
+
+  .teaser__desc {
+    color: var(--color-muted);
+    font-size: var(--step--1);
+  }
+
+  .teaser__meta {
+    margin-top: var(--space-2xs);
+  }
+
+  .teaser__arrow {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    color: var(--color-accent);
+  }
+</style>

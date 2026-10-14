@@ -13,6 +13,10 @@ export interface ContentSource {
   getAllChapters(): Promise<Chapter[]>;
   getChapter(sagaId: string, slug: string): Promise<Chapter | undefined>;
   getStoryFiles(chapterId: string): Promise<StoryFile[]>;
+  getStoryFilesBySaga(sagaId: string): Promise<StoryFile[]>;
+  getAllStoryFiles(): Promise<StoryFile[]>;
   getLore(sagaId?: string): Promise<LoreEntry[]>;
+  getAllLore(): Promise<LoreEntry[]>;
   getMusic(sagaId?: string): Promise<MusicTrack[]>;
+  getAllMusic(): Promise<MusicTrack[]>;
 }

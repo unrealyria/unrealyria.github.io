@@ -1,0 +1,99 @@
+---
+type Kind = 'sagas' | 'stories' | 'music' | 'archives';
+
+interface Props {
+  kind: Kind;
+  title: string;
+  description: string;
+}
+
+const { kind, title, description } = Astro.props;
+
+const icons: Record<Kind, string> = {
+  sagas:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 3H20v18H6.5A2.5 2.5 0 0 1 4 18.5v-13A2.5 2.5 0 0 1 6.5 3z"/></svg>',
+  stories:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h9a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3z"/><path d="M16 8a3 3 0 0 1 3-3h1v14h-1a3 3 0 0 0-3 3"/><path d="M8 9h5"/><path d="M8 13h5"/></svg>',
+  music:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6l11-2v12"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
+  archives:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 12.5 12 17l9-4.5"/><path d="M3 17 12 21.5 21 17"/></svg>',
+};
+---
+
+<div class:list={['empty-state', `empty-state--${kind}`]} role="status">
+  <span class="empty-state__icon" set:html={icons[kind]} />
+  <p class="empty-state__title">{title}</p>
+  <p class="empty-state__text">{description}</p>
+</div>
+
+<style>
+  .empty-state {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    max-width: 34rem;
+    padding: var(--space-2xl) var(--space-md);
+    text-align: center;
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .empty-state::before {
+    content: "";
+    position: absolute;
+    inset: -40% 20% auto;
+    height: 140%;
+    background: radial-gradient(
+      50% 50% at 50% 0%,
+      color-mix(in srgb, var(--color-primary) 22%, transparent),
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  .empty-state__icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin-bottom: var(--space-2xs);
+    border: 1px solid var(--color-border-strong);
+    border-radius: 50%;
+    color: var(--color-accent);
+    background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  }
+
+  .empty-state__icon :global(svg) {
+    width: 1.6rem;
+    height: 1.6rem;
+  }
+
+  .empty-state--stories .empty-state__icon {
+    color: color-mix(in srgb, var(--color-primary) 70%, var(--color-text));
+  }
+
+  .empty-state--archives .empty-state__icon {
+    color: color-mix(in srgb, var(--color-accent) 70%, var(--color-text));
+  }
+
+  .empty-state__title {
+    position: relative;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    color: var(--color-text);
+  }
+
+  .empty-state__text {
+    position: relative;
+    margin: 0;
+    color: var(--color-muted);
+    text-wrap: pretty;
+  }
+</style>

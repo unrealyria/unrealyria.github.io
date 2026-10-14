@@ -1,0 +1,166 @@
+---
+import { resolveArt } from '../lib/art';
+import { themeToCssVars, type SagaTheme } from '../lib/theme';
+
+interface Props {
+  title: string;
+  eyebrow?: string;
+  tagline?: string;
+  variant?: 'cinematic' | 'panorama';
+  theme?: SagaTheme;
+  image?: string;
+  imageAlt?: string;
+}
+
+const { title, eyebrow, tagline, variant = 'cinematic', theme, image, imageAlt } = Astro.props;
+const hasActions = Astro.slots.has('actions');
+const styleVars = theme ? themeToCssVars(theme) : undefined;
+const resolvedImage = resolveArt(image);
+---
+
+<section class:list={['hero', `hero--${variant}`]} style={styleVars}>
+  <div class="hero__backdrop">
+    {
+      resolvedImage ? (
+        <img
+          class="hero__image"
+          src={resolvedImage}
+          alt={imageAlt ?? ''}
+          width="1600"
+          height="900"
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        />
+      ) : (
+        <div class="hero__atmos" aria-hidden="true"></div>
+      )
+    }
+    <div class="hero__scrim" aria-hidden="true"></div>
+  </div>
+
+  <div class="container container--wide hero__inner">
+    <div class="hero__copy">
+      {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+      <h1 class="hero__title">{title}</h1>
+      {tagline && <p class="hero__tagline lede">{tagline}</p>}
+      {hasActions && <div class="hero__actions"><slot name="actions" /></div>}
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .hero__backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .hero__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 35%;
+  }
+
+  .hero__atmos {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        70% 80% at 18% 16%,
+        color-mix(in srgb, var(--color-primary) 34%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        60% 70% at 88% 6%,
+        color-mix(in srgb, var(--color-accent) 20%, transparent),
+        transparent 58%
+      ),
+      radial-gradient(
+        120% 90% at 50% 120%,
+        color-mix(in srgb, var(--color-primary) 16%, transparent),
+        transparent 60%
+      ),
+      repeating-linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--color-text) 3.5%, transparent) 0 1px,
+        transparent 1px 64px
+      );
+  }
+
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        100deg,
+        color-mix(in srgb, var(--color-bg) 88%, transparent) 0%,
+        color-mix(in srgb, var(--color-bg) 62%, transparent) 42%,
+        transparent 78%
+      ),
+      linear-gradient(to top, color-mix(in srgb, var(--color-bg) 82%, transparent), transparent 45%);
+  }
+
+  .hero__inner {
+    position: relative;
+    z-index: 1;
+    padding-block: clamp(3.25rem, 2rem + 9vw, 7.5rem);
+  }
+
+  .hero--panorama .hero__inner {
+    padding-block: clamp(3.5rem, 2rem + 12vw, 9rem);
+  }
+
+  .hero__copy {
+    max-width: 46rem;
+  }
+
+  .hero__title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    font-size: var(--step-5);
+    text-wrap: balance;
+  }
+
+  .hero--cinematic .hero__title {
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .hero--panorama .hero__title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--step-4);
+    max-width: 22ch;
+  }
+
+  .hero__tagline {
+    margin: var(--space-md) 0 0;
+    max-width: 42ch;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+  }
+
+  @media (max-width: 30rem) {
+    .hero__actions .btn {
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+  }
+</style>

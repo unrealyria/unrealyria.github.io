@@ -1,12 +1,160 @@
 ---
-import { SITE } from '../lib/site';
+import { SITE, SOCIAL_LINKS } from '../lib/site';
+import {
+  archivesPath,
+  homePath,
+  musicPath,
+  sagasPath,
+  storiesPath,
+} from '../lib/paths';
 
 const year = new Date().getFullYear();
+
+const footerNav = [
+  { href: homePath(), label: 'Home' },
+  { href: sagasPath(), label: 'Sagas' },
+  { href: storiesPath(), label: 'Stories' },
+  { href: musicPath(), label: 'Music' },
+  { href: archivesPath(), label: 'Archives' },
+];
 ---
 
 <footer class="site-footer">
-  <div class="wrap">
-    <p>&copy; {year} {SITE.name}. All content is a work of fiction.</p>
-    <p>Canonical brand assets are pending approval; neutral placeholders are used meanwhile.</p>
+  <div class="container container--wide site-footer__inner">
+    <div class="site-footer__brand">
+      <p class="brand brand--footer">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__name">{SITE.name}</span>
+      </p>
+      <p class="site-footer__tagline">{SITE.tagline}</p>
+    </div>
+
+    <nav class="site-footer__nav" aria-label="Footer">
+      <ul>
+        {
+          footerNav.map((item) => (
+            <li>
+              <a href={item.href}>{item.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    {
+      SOCIAL_LINKS.length > 0 && (
+        <ul class="site-footer__social" aria-label="Elsewhere">
+          {SOCIAL_LINKS.map((link) => (
+            <li>
+              <a href={link.href} rel="me noopener noreferrer" target="_blank">
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    <div class="site-footer__legal">
+      <p>&copy; {year} {SITE.name}. All content is a work of fiction.</p>
+      <p>Canonical brand and character artwork is pending approval; neutral placeholders are used meanwhile.</p>
+    </div>
   </div>
 </footer>
+
+<style>
+  .site-footer {
+    margin-top: var(--space-2xl);
+    border-top: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--color-bg) 60%, transparent);
+    padding-block: var(--space-xl);
+    color: var(--color-muted);
+    font-size: var(--step--1);
+  }
+
+  .site-footer__inner {
+    display: grid;
+    gap: var(--space-lg);
+    grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .brand--footer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 var(--space-xs);
+    color: var(--color-text);
+  }
+
+  .brand__mark {
+    position: relative;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    border: 1.5px solid color-mix(in srgb, var(--color-accent) 70%, transparent);
+    box-shadow: inset 0 0 0 0.24rem color-mix(in srgb, var(--color-primary) 40%, transparent);
+  }
+
+  .brand__mark::after {
+    content: "";
+    position: absolute;
+    inset: 36%;
+    border-radius: 50%;
+    background: var(--color-text);
+    opacity: 0.8;
+  }
+
+  .brand__name {
+    font-weight: 800;
+    font-size: 0.88rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+  }
+
+  .site-footer__tagline {
+    margin: 0;
+    max-width: 24rem;
+    text-wrap: pretty;
+  }
+
+  .site-footer__nav ul,
+  .site-footer__social {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-footer__nav a,
+  .site-footer__social a {
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .site-footer__nav a:hover,
+  .site-footer__social a:hover {
+    color: var(--color-text);
+  }
+
+  .site-footer__legal {
+    grid-column: 1 / -1;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .site-footer__legal p {
+    margin: 0 0 0.35em;
+  }
+
+  @media (max-width: 48rem) {
+    .site-footer__inner {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .site-footer__brand {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

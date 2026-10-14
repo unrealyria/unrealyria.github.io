@@ -1,0 +1,119 @@
+---
+import { withBase } from '../lib/paths';
+
+type Ratio = '16:9' | '2:3' | '1:1';
+
+interface Props {
+  src?: string;
+  alt: string;
+  ratio?: Ratio;
+  label?: string;
+  loading?: 'lazy' | 'eager';
+  class?: string;
+}
+
+const { src, alt, ratio = '16:9', label, loading = 'lazy', class: className } = Astro.props;
+
+const dimensions: Record<Ratio, [number, number]> = {
+  '16:9': [1600, 900],
+  '2:3': [1000, 1500],
+  '1:1': [1200, 1200],
+};
+const ratioCss: Record<Ratio, string> = {
+  '16:9': '16 / 9',
+  '2:3': '2 / 3',
+  '1:1': '1 / 1',
+};
+
+const [width, height] = dimensions[ratio];
+const resolvedSrc = src ? (src.startsWith('/') ? withBase(src.replace(/^\/+/, '')) : src) : undefined;
+---
+
+<figure class:list={['art', className]} style={`--art-ratio: ${ratioCss}`}>
+  {
+    resolvedSrc ? (
+      <img src={resolvedSrc} alt={alt} width={width} height={height} loading={loading} decoding="async" />
+    ) : (
+      <div class="art__placeholder" role="img" aria-label={alt}>
+        <span class="art__mark" aria-hidden="true" />
+        <span class="art__label">{label ?? `Neutral artwork placeholder · ${ratio}`}</span>
+      </div>
+    )
+  }
+</figure>
+
+<style>
+  .art {
+    position: relative;
+    margin: 0;
+    aspect-ratio: var(--art-ratio);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--gradient-surface);
+  }
+
+  .art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .art__placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    text-align: center;
+    background:
+      radial-gradient(
+        120% 120% at 28% 18%,
+        color-mix(in srgb, var(--color-primary) 22%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        120% 120% at 82% 92%,
+        color-mix(in srgb, var(--color-accent) 16%, transparent),
+        transparent 55%
+      ),
+      repeating-linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--color-text) 5%, transparent) 0 1px,
+        transparent 1px 44px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--color-text) 5%, transparent) 0 1px,
+        transparent 1px 44px
+      );
+  }
+
+  .art__mark {
+    position: relative;
+    width: clamp(3rem, 12%, 4.5rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
+    box-shadow: inset 0 0 0 0.6rem color-mix(in srgb, var(--color-primary) 26%, transparent);
+  }
+
+  .art__mark::after {
+    content: "";
+    position: absolute;
+    inset: 34%;
+    border-radius: 50%;
+    background: var(--color-text);
+    opacity: 0.55;
+  }
+
+  .art__label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+</style>

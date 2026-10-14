@@ -1,0 +1,66 @@
+---
+import { withBase } from '../lib/paths';
+
+interface Panel {
+  src: string;
+  alt: string;
+}
+
+interface Props {
+  panels?: Panel[];
+}
+
+const { panels = [] } = Astro.props;
+
+const resolved = panels.map((panel) => ({
+  ...panel,
+  src: panel.src.startsWith('/') ? withBase(panel.src.replace(/^\/+/, '')) : panel.src,
+}));
+---
+
+{
+  resolved.length > 0 && (
+    <section class="panels" aria-label="Chapter artwork">
+      <div class="container container--wide panels__inner">
+        {resolved.map((panel) => (
+          <figure class="panels__item">
+            <img
+              src={panel.src}
+              alt={panel.alt}
+              width="1600"
+              height="900"
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .panels {
+    margin-block: var(--space-2xl);
+  }
+
+  .panels__inner {
+    display: grid;
+    gap: var(--space-md);
+  }
+
+  .panels__item {
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--gradient-surface);
+  }
+
+  .panels__item img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+</style>

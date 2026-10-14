@@ -1,0 +1,61 @@
+---
+import ContentTeaser from '../../components/ContentTeaser.astro';
+import EmptyState from '../../components/EmptyState.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { content } from '../../lib/cms';
+import { chapterPath, chapterSlug } from '../../lib/paths';
+
+const chapters = await content.getAllChapters();
+const chapterIndex = new Map(chapters.map((chapter) => [chapter.id, chapter]));
+const storyFiles = await content.getAllStoryFiles();
+
+const items = storyFiles.map((file) => {
+  const chapter = chapterIndex.get(file.data.chapter.id);
+  return {
+    key: file.id,
+    kind: chapter ? `Chapter ${chapter.data.number} · ${chapter.data.title}` : 'Story file',
+    title: file.data.title,
+    description: file.data.summary,
+    href: chapter ? chapterPath(chapter.data.saga.id, chapterSlug(chapter.id)) : undefined,
+  };
+});
+---
+
+<BaseLayout
+  title="Stories"
+  description="Story files that accompany the published chapters of the UnreaLyria sagas."
+>
+  <section class="section">
+    <div class="container">
+      <header class="page-head">
+        <p class="eyebrow">Story files</p>
+        <h1 class="page-head__title display">Stories</h1>
+        <p class="lede">
+          Short story files that accompany the published chapters. Each links back to the chapter
+          it belongs to.
+        </p>
+      </header>
+
+      {
+        items.length === 0 ? (
+          <EmptyState
+            kind="stories"
+            title="No story files yet"
+            description="Companion scenes appear here once a chapter and its story files are published."
+          />
+        ) : (
+          <ul class="grid-teasers">
+            {items.map((item) => (
+              <ContentTeaser
+                kind={item.kind}
+                title={item.title}
+                description={item.description}
+                href={item.href}
+              />
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
