@@ -1,114 +1,308 @@
 ---
-import ChapterCard from '../components/ChapterCard.astro';
+import brandHero from '../assets/heroes/unrealyria-brand-home-v1.png';
+import brandHeroMobile from '../assets/heroes/unrealyria-brand-home-mobile-v1.png';
 import ContentTeaser from '../components/ContentTeaser.astro';
 import Hero from '../components/Hero.astro';
-import SagaFeature from '../components/SagaFeature.astro';
+import SagaCard from '../components/SagaCard.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { content } from '../lib/cms';
-import { musicPath, sagaPath, sagasPath, storiesPath } from '../lib/paths';
+import { chapterPath, chapterSlug, musicPath, sagasPath, storiesPath } from '../lib/paths';
+import { sagaKeyArt } from '../lib/saga-art';
 import { HOME_HERO_ART, SITE } from '../lib/site';
 
 const sagas = await content.getSagas();
-const featured = sagas.find((saga) => saga.data.featured) ?? sagas[0];
+const worlds = sagas.map((saga) => ({ saga, art: sagaKeyArt(saga.id) }));
 
-const chapters = await content.getAllChapters();
-const entryChapter = chapters.length > 0 ? chapters[chapters.length - 1] : undefined;
-
-const storyFiles = (await content.getAllStoryFiles()).slice(0, 4);
 const music = (await content.getAllMusic()).slice(0, 4);
+const storyFiles = (await content.getAllStoryFiles()).slice(0, 4);
+const chapters = await content.getAllChapters();
+const chapterIndex = new Map(chapters.map((chapter) => [chapter.id, chapter]));
+
+const musicItems = music.map((track) => ({
+  key: track.id,
+  title: track.data.title,
+  meta: track.data.credits,
+}));
+
+const storyItems = storyFiles.map((file) => {
+  const chapter = chapterIndex.get(file.data.chapter.id);
+  return {
+    key: file.id,
+    title: file.data.title,
+    description: file.data.summary,
+    kind: chapter ? `Chapter ${chapter.data.number} · ${chapter.data.title}` : 'Story file',
+    href: chapter ? chapterPath(chapter.data.saga.id, chapterSlug(chapter.id)) : undefined,
+  };
+});
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: SITE.name,
+  alternateName: SITE.title,
   url: SITE.url,
   description: SITE.description,
+  inLanguage: SITE.defaultLocale,
+  creator: {
+    '@type': 'Organization',
+    name: SITE.name,
+    url: SITE.url,
+  },
 };
 ---
 
-<BaseLayout jsonLd={jsonLd}>
+<BaseLayout title={SITE.title} description={SITE.description} jsonLd={jsonLd}>
   <Hero
     variant="cinematic"
-    eyebrow="An original narrative universe"
+    eyebrow="An independent creative universe"
     title={SITE.name}
     tagline={SITE.tagline}
-    image={HOME_HERO_ART.image}
+    image={brandHero}
+    imageMobile={brandHeroMobile}
     imageAlt={HOME_HERO_ART.imageAlt}
+    align="start"
   >
     <Fragment slot="actions">
-      {
-        featured && (
-          <a class="btn btn--primary btn--lg" href={sagaPath(featured.id)}>
-            Enter the saga <span class="btn__arrow" aria-hidden="true">→</span>
-          </a>
-        )
-      }
-      <a class="btn btn--ghost" href={sagasPath()}>Browse sagas</a>
+      <a class="btn btn--primary btn--lg" href={sagasPath()}>
+        Explore the Universe <span class="btn__arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="btn btn--ghost" href={musicPath()}>Listen to the Music</a>
     </Fragment>
   </Hero>
 
-  {featured && <SagaFeature saga={featured} chapter={entryChapter} eyebrow="The premiere" priority />}
-
-  {
-    entryChapter && featured && (
-      <section class="section section--tight" aria-labelledby="entry-heading">
-        <div class="container">
-          <SectionHeading
-            eyebrow="Now reading"
-            title="Begin the story"
-            id="entry-heading"
-            link={{ href: sagaPath(featured.id), label: 'All chapters' }}
-          />
-          <ol class="chapter-list">
-            <ChapterCard chapter={entryChapter} sagaId={featured.id} first />
-          </ol>
+  <section class="section" aria-labelledby="intro-heading">
+    <div class="container">
+      <div class="intro">
+        <div class="intro__head">
+          <p class="eyebrow">The project</p>
+          <h2 id="intro-heading" class="intro__title display">
+            A creative universe, told in music and words
+          </h2>
         </div>
-      </section>
-    )
-  }
-
-  {
-    storyFiles.length > 0 && (
-      <section class="section section--tight" aria-labelledby="stories-heading">
-        <div class="container">
-          <SectionHeading
-            eyebrow="Story files"
-            title="From the archive"
-            id="stories-heading"
-            link={{ href: storiesPath(), label: 'All stories' }}
-          />
-          <ul class="grid-teasers">
-            {storyFiles.map((file) => (
-              <ContentTeaser
-                kind="Story file"
-                title={file.data.title}
-                description={file.data.summary}
-              />
-            ))}
-          </ul>
+        <div class="intro__body">
+          <p class="lede">
+            UnreaLyria is an independent creative project. It brings together original music,
+            narrative fiction and anime-inspired imagery, built around worlds that are still being
+            written.
+          </p>
+          <p>
+            Every saga is a self-contained story with its own cast and world, and each soundtrack is
+            composed as part of the world it belongs to — so the music and the fiction move together
+            rather than sit side by side.
+          </p>
         </div>
-      </section>
-    )
-  }
+      </div>
+    </div>
+  </section>
 
-  {
-    music.length > 0 && (
-      <section class="section section--tight" aria-labelledby="music-heading">
-        <div class="container">
-          <SectionHeading
-            eyebrow="Music"
-            title="The sound of the world"
-            id="music-heading"
-            link={{ href: musicPath(), label: 'All music' }}
-          />
-          <ul class="grid-teasers">
-            {music.map((track) => (
-              <ContentTeaser kind="Track" title={track.data.title} meta={track.data.credits} />
-            ))}
-          </ul>
+  <section class="section section--tight" id="worlds" aria-labelledby="worlds-heading">
+    <div class="container">
+      <SectionHeading
+        eyebrow="The worlds"
+        title="Explore the Worlds"
+        id="worlds-heading"
+        link={{ href: sagasPath(), label: 'All sagas' }}
+      />
+      <ul class="grid-cards">
+        {
+          worlds.map(({ saga, art }) => (
+            <SagaCard saga={saga} art={art?.image} artAlt={art?.alt} />
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--tight" aria-labelledby="sound-heading">
+    <div class="container">
+      <SectionHeading
+        eyebrow="Sound & story"
+        title="Where the music and the story meet"
+        id="sound-heading"
+      />
+      <p class="lede section-lede">
+        Music on UnreaLyria is written for the worlds it belongs to. Each piece sits alongside the
+        chapters and story files that share its themes.
+      </p>
+
+      <div class="split">
+        <div class="split__col">
+          <div class="split__head">
+            <h3 class="split__title display">Music</h3>
+            <a class="split__link" href={musicPath()}>All music →</a>
+          </div>
+          {
+            musicItems.length > 0 ? (
+              <ul class="grid-teasers">
+                {musicItems.map((item) => (
+                  <ContentTeaser kind="Track" title={item.title} meta={item.meta} href={musicPath()} />
+                ))}
+              </ul>
+            ) : (
+              <p class="meta">The first soundtrack is being prepared.</p>
+            )
+          }
         </div>
-      </section>
-    )
-  }
+
+        <div class="split__col">
+          <div class="split__head">
+            <h3 class="split__title display">Stories</h3>
+            <a class="split__link" href={storiesPath()}>All stories →</a>
+          </div>
+          {
+            storyItems.length > 0 ? (
+              <ul class="grid-teasers">
+                {storyItems.map((item) => (
+                  <ContentTeaser
+                    kind={item.kind}
+                    title={item.title}
+                    description={item.description}
+                    href={item.href}
+                  />
+                ))}
+              </ul>
+            ) : (
+              <p class="meta">Story files appear here as chapters are published.</p>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight" aria-labelledby="cta-heading">
+    <div class="container">
+      <div class="final-cta">
+        <p class="eyebrow">Enter</p>
+        <h2 id="cta-heading" class="final-cta__title display">Step into the UnreaLyria universe</h2>
+        <p class="lede final-cta__text">
+          Start with the first published saga, or begin with the music that shapes it.
+        </p>
+        <div class="final-cta__actions">
+          <a class="btn btn--primary btn--lg" href={sagasPath()}>
+            Explore the Worlds <span class="btn__arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="btn btn--ghost" href={musicPath()}>Listen to the Music</a>
+        </div>
+      </div>
+    </div>
+  </section>
 </BaseLayout>
+
+<style>
+  .intro {
+    display: grid;
+    gap: var(--space-lg);
+    align-items: start;
+  }
+
+  .intro__title {
+    margin: 0;
+    font-size: var(--step-3);
+    max-width: 20ch;
+  }
+
+  .intro__body {
+    max-width: 46rem;
+  }
+
+  .intro__body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-lede {
+    margin-top: calc(-1 * var(--space-sm));
+    margin-bottom: var(--space-xl);
+  }
+
+  .split {
+    display: grid;
+    gap: var(--space-xl);
+  }
+
+  .split__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+
+  .split__title {
+    margin: 0;
+    font-size: var(--step-2);
+  }
+
+  .split__link {
+    font-size: var(--step--1);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .final-cta {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(2.5rem, 1.5rem + 5vw, 4.5rem);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--gradient-surface);
+    box-shadow: var(--shadow-md);
+    text-align: center;
+  }
+
+  .final-cta::before {
+    content: "";
+    position: absolute;
+    inset: -60% 10% auto;
+    height: 160%;
+    background: radial-gradient(
+      50% 60% at 50% 0%,
+      color-mix(in srgb, var(--color-primary) 26%, transparent),
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  .final-cta > * {
+    position: relative;
+  }
+
+  .final-cta__title {
+    margin: 0 auto var(--space-sm);
+    font-size: var(--step-3);
+    max-width: 24ch;
+  }
+
+  .final-cta__text {
+    margin: 0 auto var(--space-lg);
+    max-width: 46ch;
+  }
+
+  .final-cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+
+  @media (min-width: 56rem) {
+    .intro {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: var(--space-2xl);
+    }
+
+    .split {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .final-cta__actions .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>

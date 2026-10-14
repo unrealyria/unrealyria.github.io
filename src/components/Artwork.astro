@@ -1,18 +1,32 @@
 ---
+import { Image } from 'astro:assets';
 import { withBase } from '../lib/paths';
 
 type Ratio = '16:9' | '2:3' | '1:1';
 
 interface Props {
   src?: string;
+  image?: ImageMetadata;
   alt: string;
   ratio?: Ratio;
   label?: string;
   loading?: 'lazy' | 'eager';
   class?: string;
+  widths?: number[];
+  sizes?: string;
 }
 
-const { src, alt, ratio = '16:9', label, loading = 'lazy', class: className } = Astro.props;
+const {
+  src,
+  image,
+  alt,
+  ratio = '16:9',
+  label,
+  loading = 'lazy',
+  class: className,
+  widths,
+  sizes,
+} = Astro.props;
 
 const dimensions: Record<Ratio, [number, number]> = {
   '16:9': [1600, 900],
@@ -31,7 +45,16 @@ const resolvedSrc = src ? (src.startsWith('/') ? withBase(src.replace(/^\/+/, ''
 
 <figure class:list={['art', className]} style={`--art-ratio: ${ratioCss}`}>
   {
-    resolvedSrc ? (
+    image ? (
+      <Image
+        src={image}
+        alt={alt}
+        widths={widths ?? [400, 640, 960]}
+        sizes={sizes ?? '(min-width: 64rem) 34rem, (min-width: 48rem) 45vw, 92vw'}
+        loading={loading}
+        decoding="async"
+      />
+    ) : resolvedSrc ? (
       <img src={resolvedSrc} alt={alt} width={width} height={height} loading={loading} decoding="async" />
     ) : (
       <div class="art__placeholder" role="img" aria-label={alt}>

@@ -1,22 +1,43 @@
 ---
-import { SITE } from '../lib/site';
+import { hasOfficialArt } from '../lib/art';
 import { withBase } from '../lib/paths';
+import { OG_IMAGE, SITE } from '../lib/site';
 
 interface Props {
   title: string;
   description: string;
   image?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   type?: 'website' | 'article' | 'book';
   noindex?: boolean;
 }
 
-const { title, description, image, type = 'website', noindex = false } = Astro.props;
+const {
+  title,
+  description,
+  image,
+  imageAlt,
+  imageWidth,
+  imageHeight,
+  type = 'website',
+  noindex = false,
+} = Astro.props;
 
 const siteUrl = Astro.site ?? new URL(SITE.url);
 const canonical = new URL(Astro.url.pathname, siteUrl).href;
-const ogImage = image
-  ? new URL(withBase(image.replace(/^\/+/, '')), siteUrl).href
-  : undefined;
+
+// A page may pass a dedicated social image; otherwise (or when the slot only
+// points at a neutral placeholder) every page falls back to the brand card so
+// no page is credited with artwork it does not own.
+const useOverride = hasOfficialArt(image);
+const ogPath = useOverride ? (image as string) : OG_IMAGE.path;
+const ogImage = new URL(withBase(ogPath.replace(/^\/+/, '')), siteUrl).href;
+const ogAlt = useOverride ? (imageAlt ?? title) : OG_IMAGE.alt;
+const ogWidth = useOverride ? imageWidth : OG_IMAGE.width;
+const ogHeight = useOverride ? imageHeight : OG_IMAGE.height;
+const ogType = useOverride ? undefined : OG_IMAGE.type;
 ---
 
 <meta charset="utf-8" />
@@ -39,10 +60,14 @@ const ogImage = image
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
 <meta property="og:locale" content="en_US" />
-{ogImage && <meta property="og:image" content={ogImage} />}
-{ogImage && <meta property="og:image:alt" content={title} />}
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:alt" content={ogAlt} />
+{ogWidth && <meta property="og:image:width" content={String(ogWidth)} />}
+{ogHeight && <meta property="og:image:height" content={String(ogHeight)} />}
+{ogType && <meta property="og:image:type" content={ogType} />}
 
-<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
-{ogImage && <meta name="twitter:image" content={ogImage} />}
+<meta name="twitter:image" content={ogImage} />
+<meta name="twitter:image:alt" content={ogAlt} />

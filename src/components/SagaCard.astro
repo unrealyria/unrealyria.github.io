@@ -6,21 +6,28 @@ import { themeToCssVars } from '../lib/theme';
 
 interface Props {
   saga: Saga;
+  art?: ImageMetadata;
+  artAlt?: string;
 }
 
-const { saga } = Astro.props;
+const { saga, art, artAlt } = Astro.props;
 const href = sagaPath(saga.id);
-const alt = saga.data.imageAlt ?? `Neutral artwork placeholder for ${saga.data.title}.`;
+const alt = art
+  ? (artAlt ?? `Artwork for ${saga.data.title}.`)
+  : (saga.data.imageAlt ?? `Artwork for ${saga.data.title}.`);
 ---
 
 <li class="saga-card" style={themeToCssVars(saga.data.theme)}>
   <a class="saga-card__link" href={href}>
     <Artwork
       class="saga-card__art"
-      src={saga.data.image}
+      image={art}
+      src={art ? undefined : saga.data.image}
       alt={alt}
       ratio="16:9"
       label="Saga key art · 16:9"
+      widths={[400, 640, 960]}
+      sizes="(min-width: 64rem) 30rem, (min-width: 48rem) 45vw, 92vw"
     />
     <div class="saga-card__body">
       <p class="saga-card__eyebrow">Saga</p>

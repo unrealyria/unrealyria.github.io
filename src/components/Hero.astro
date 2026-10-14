@@ -1,4 +1,5 @@
 ---
+import { getImage } from 'astro:assets';
 import { resolveArt } from '../lib/art';
 import { themeToCssVars, type SagaTheme } from '../lib/theme';
 
@@ -8,23 +9,143 @@ interface Props {
   tagline?: string;
   variant?: 'cinematic' | 'panorama';
   theme?: SagaTheme;
-  image?: string;
+  image?: string | ImageMetadata;
   imageAlt?: string;
+  imageMobile?: string | ImageMetadata;
+  align?: 'start' | 'end';
 }
 
-const { title, eyebrow, tagline, variant = 'cinematic', theme, image, imageAlt } = Astro.props;
+const {
+  title,
+  eyebrow,
+  tagline,
+  variant = 'cinematic',
+  theme,
+  image,
+  imageAlt,
+  imageMobile,
+  align = 'start',
+} = Astro.props;
+
 const hasActions = Astro.slots.has('actions');
 const styleVars = theme ? themeToCssVars(theme) : undefined;
-const resolvedImage = resolveArt(image);
+
+// Imported assets (ImageMetadata) go through the Astro image pipeline for
+// AVIF/WebP responsive delivery; plain strings keep the legacy public-path
+// behaviour used by saga pages.
+function isLocalAsset(value: unknown): value is ImageMetadata {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'src' in value &&
+    'width' in value &&
+    'height' in value &&
+    'format' in value
+  );
+}
+
+const desktopImage = isLocalAsset(image) ? image : undefined;
+const mobileImage = isLocalAsset(imageMobile) ? imageMobile : undefined;
+const stringImage = desktopImage
+  ? undefined
+  : resolveArt(typeof image === 'string' ? image : undefined);
+
+// Full-bleed art direction: panorama from tablet up, vertical art on phones.
+const HERO_SIZES = '100vw';
+const DESKTOP_WIDTHS = [640, 960, 1280, 1672];
+const MOBILE_WIDTHS = [360, 480, 640, 828, 941];
+
+const desktopSources = desktopImage
+  ? await Promise.all([
+      getImage({
+        src: desktopImage,
+        format: 'avif',
+        widths: DESKTOP_WIDTHS,
+        sizes: HERO_SIZES,
+        quality: 68,
+      }),
+      getImage({
+        src: desktopImage,
+        format: 'webp',
+        widths: DESKTOP_WIDTHS,
+        sizes: HERO_SIZES,
+        quality: 74,
+      }),
+    ])
+  : null;
+
+const mobileSources = mobileImage
+  ? await Promise.all([
+      getImage({
+        src: mobileImage,
+        format: 'avif',
+        widths: MOBILE_WIDTHS,
+        sizes: HERO_SIZES,
+        quality: 68,
+      }),
+      getImage({
+        src: mobileImage,
+        format: 'webp',
+        widths: MOBILE_WIDTHS,
+        sizes: HERO_SIZES,
+        quality: 74,
+      }),
+    ])
+  : null;
+
+const [desktopAvif, desktopWebp] = desktopSources ?? [];
+const [mobileAvif, mobileWebp] = mobileSources ?? [];
 ---
 
-<section class:list={['hero', `hero--${variant}`]} style={styleVars}>
+<section
+  class:list={[
+    'hero',
+    `hero--${variant}`,
+    desktopImage ? 'hero--photo' : undefined,
+    desktopImage ? `hero--align-${align}` : undefined,
+    mobileImage ? 'hero--mobile-art' : undefined,
+  ]}
+  style={styleVars}
+>
   <div class="hero__backdrop">
     {
-      resolvedImage ? (
+      desktopImage && desktopWebp ? (
+        <picture class="hero__picture">
+          {mobileAvif && (
+            <source
+              type="image/avif"
+              media="(max-width: 47.9375rem)"
+              srcset={mobileAvif.srcSet.attribute}
+              sizes={HERO_SIZES}
+            />
+          )}
+          {mobileWebp && (
+            <source
+              type="image/webp"
+              media="(max-width: 47.9375rem)"
+              srcset={mobileWebp.srcSet.attribute}
+              sizes={HERO_SIZES}
+            />
+          )}
+          {desktopAvif && (
+            <source type="image/avif" srcset={desktopAvif.srcSet.attribute} sizes={HERO_SIZES} />
+          )}
+          <source type="image/webp" srcset={desktopWebp.srcSet.attribute} sizes={HERO_SIZES} />
+          <img
+            class="hero__image"
+            src={desktopWebp.src}
+            alt={imageAlt ?? ''}
+            width={desktopImage.width}
+            height={desktopImage.height}
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+          />
+        </picture>
+      ) : stringImage ? (
         <img
           class="hero__image"
-          src={resolvedImage}
+          src={stringImage}
           alt={imageAlt ?? ''}
           width="1600"
           height="900"
@@ -61,6 +182,12 @@ const resolvedImage = resolveArt(image);
     position: absolute;
     inset: 0;
     z-index: 0;
+  }
+
+  .hero__picture {
+    position: absolute;
+    inset: 0;
+    display: block;
   }
 
   .hero__image {
@@ -161,6 +288,140 @@ const resolvedImage = resolveArt(image);
     .hero__actions .btn {
       flex: 1 1 auto;
       justify-content: center;
+    }
+  }
+
+  /* --- Responsive artwork hero (brand / saga key art) ------------------- */
+
+  /* Tablet and up: the copy sits low by default and the lower band is scrimmed
+     for readable contrast. The focal subject is kept opposite the copy. */
+  .hero--photo .hero__inner {
+    display: flex;
+    align-items: flex-end;
+    min-height: clamp(30rem, 66vh, 44rem);
+  }
+
+  .hero--photo .hero__copy {
+    max-width: 38rem;
+  }
+
+  /* Default art direction: focal subject on the left, copy on the right. */
+  .hero--photo .hero__image {
+    object-position: left 30%;
+  }
+
+  .hero--photo .hero__scrim {
+    background:
+      linear-gradient(
+        to top,
+        color-mix(in srgb, var(--color-bg) 90%, transparent) 0%,
+        color-mix(in srgb, var(--color-bg) 62%, transparent) 38%,
+        transparent 66%
+      ),
+      linear-gradient(to right, color-mix(in srgb, var(--color-bg) 58%, transparent), transparent 48%);
+  }
+
+  /* Brand art direction: focal subject on the right, copy on the left. */
+  .hero--align-start.hero--photo .hero__image {
+    object-position: right 32%;
+  }
+
+  /* The scrim itself follows the copy side at each breakpoint (see the
+     tablet default below, plus the ≥1280px and ≤767px overrides), so it always
+     protects the text and never darkens the focal subject. */
+
+  /* Desktop ≥1280px: full-bleed panoramic artwork with the copy on one side. */
+  @media (min-width: 80rem) {
+    .hero--align-end .hero__inner {
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .hero--align-end .hero__copy {
+      max-width: 40rem;
+    }
+
+    .hero--align-end .hero__scrim {
+      background:
+        linear-gradient(
+          260deg,
+          color-mix(in srgb, var(--color-bg) 92%, transparent) 0%,
+          color-mix(in srgb, var(--color-bg) 66%, transparent) 44%,
+          transparent 82%
+        ),
+        linear-gradient(
+          to top,
+          color-mix(in srgb, var(--color-bg) 78%, transparent),
+          transparent 48%
+        );
+    }
+
+    .hero--align-start .hero__inner {
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .hero--align-start .hero__copy {
+      max-width: 40rem;
+    }
+
+    .hero--align-start .hero__scrim {
+      background:
+        linear-gradient(
+          100deg,
+          color-mix(in srgb, var(--color-bg) 95%, transparent) 0%,
+          color-mix(in srgb, var(--color-bg) 74%, transparent) 38%,
+          transparent 78%
+        ),
+        linear-gradient(
+          to top,
+          color-mix(in srgb, var(--color-bg) 72%, transparent),
+          transparent 46%
+        );
+    }
+  }
+
+  /* Phones ≤767px: dedicated vertical artwork when supplied, otherwise the
+     16:9 art is cropped to keep the focal subject visible. The copy is anchored
+     to the bottom with a strong lower scrim. */
+  @media (max-width: 47.9375rem) {
+    .hero--photo .hero__inner {
+      min-height: clamp(32rem, 82vh, 46rem);
+    }
+
+    /* Vertical artwork: keep the face/upper body in view. */
+    .hero--photo .hero__image {
+      object-position: center 30%;
+    }
+
+    /* Fallback when only a 16:9 asset is available: crop to the right subject. */
+    .hero--align-start.hero--photo:not(.hero--mobile-art) .hero__image {
+      object-position: 82% 16%;
+    }
+
+    .hero--photo .hero__actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .hero--photo .hero__actions .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .hero--photo .hero__scrim {
+      background:
+        linear-gradient(
+          to top,
+          color-mix(in srgb, var(--color-bg) 94%, transparent) 0%,
+          color-mix(in srgb, var(--color-bg) 72%, transparent) 32%,
+          transparent 64%
+        ),
+        linear-gradient(
+          to bottom,
+          color-mix(in srgb, var(--color-bg) 52%, transparent),
+          transparent 28%
+        );
     }
   }
 </style>

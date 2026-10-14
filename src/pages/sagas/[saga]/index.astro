@@ -6,6 +6,7 @@ import SectionHeading from '../../../components/SectionHeading.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { content } from '../../../lib/cms';
 import { archivesPath, chapterPath, chapterSlug, musicPath } from '../../../lib/paths';
+import { sagaKeyArt } from '../../../lib/saga-art';
 import { SITE } from '../../../lib/site';
 
 export async function getStaticPaths() {
@@ -29,6 +30,8 @@ const firstChapter = chapters[0];
 const chapterIndex = new Map(chapters.map((chapter) => [chapter.id, chapter]));
 
 const heroImageAlt = saga.data.imageAlt ?? `Key visual for ${saga.data.title}.`;
+const keyArt = sagaKeyArt(saga.id);
+const heroAlt = keyArt?.alt ?? heroImageAlt;
 
 const extras = [
   ...storyFiles.map((file) => {
@@ -79,8 +82,10 @@ const jsonLd = {
     theme={saga.data.theme}
     eyebrow="Saga"
     title={saga.data.title}
-    image={saga.data.image}
-    imageAlt={heroImageAlt}
+    image={keyArt?.image ?? saga.data.image}
+    imageMobile={keyArt?.imageMobile}
+    imageAlt={heroAlt}
+    align={keyArt ? 'end' : undefined}
   >
     <Fragment slot="actions">
       {
