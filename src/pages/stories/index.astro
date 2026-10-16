@@ -1,6 +1,8 @@
 ---
+import storiesHero from '../../assets/heroes/unrealyria-stories-hero-v1.png';
 import ContentTeaser from '../../components/ContentTeaser.astro';
 import EmptyState from '../../components/EmptyState.astro';
+import Hero from '../../components/Hero.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { content } from '../../lib/cms';
 import { chapterPath, chapterSlug } from '../../lib/paths';
@@ -25,17 +27,20 @@ const items = storyFiles.map((file) => {
   title="Stories"
   description="Story files that accompany the published chapters of the UnreaLyria sagas."
 >
+  <Hero
+    variant="cinematic"
+    eyebrow="Story files"
+    title="Stories"
+    tagline="Short story files that accompany the published chapters. Each links back to the chapter it belongs to."
+    image={storiesHero}
+    imageAlt="Lyria writing in a notebook at a café window at night, the rain-streaked city glowing behind her."
+    align="start"
+    focus="58% 26%"
+    focusMobile="56% 22%"
+  />
+
   <section class="section">
     <div class="container">
-      <header class="page-head">
-        <p class="eyebrow">Story files</p>
-        <h1 class="page-head__title display">Stories</h1>
-        <p class="lede">
-          Short story files that accompany the published chapters. Each links back to the chapter
-          it belongs to.
-        </p>
-      </header>
-
       {
         items.length === 0 ? (
           <EmptyState

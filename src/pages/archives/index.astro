@@ -1,6 +1,8 @@
 ---
+import archivesHero from '../../assets/heroes/unrealyria-archives-hero-v1.png';
 import ContentTeaser from '../../components/ContentTeaser.astro';
 import EmptyState from '../../components/EmptyState.astro';
+import Hero from '../../components/Hero.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { content } from '../../lib/cms';
 import { sagaPath } from '../../lib/paths';
@@ -27,17 +29,20 @@ const items = lore.map((entry) => {
   title="Archives"
   description="Lore entries from the published sagas of the UnreaLyria universe."
 >
+  <Hero
+    variant="cinematic"
+    eyebrow="Lore"
+    title="Archives"
+    tagline="Published lore entries from across the universe, grouped by saga. More entries are added as they are approved."
+    image={archivesHero}
+    imageAlt="Lyria sorting photographs and folders in an archive room lined with labelled boxes."
+    align="start"
+    focus="52% 26%"
+    focusMobile="50% 24%"
+  />
+
   <section class="section">
     <div class="container">
-      <header class="page-head">
-        <p class="eyebrow">Lore</p>
-        <h1 class="page-head__title display">Archives</h1>
-        <p class="lede">
-          Published lore entries from across the universe, grouped by saga. More entries are added
-          as they are approved.
-        </p>
-      </header>
-
       {
         items.length === 0 ? (
           <EmptyState

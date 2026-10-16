@@ -3,7 +3,7 @@ title: First Signal
 summary: Something in the valley answers back.
 chapter: virtual-world/01-welcome-world
 order: 2
-status: published
+status: draft
 locale: en
 ---
 

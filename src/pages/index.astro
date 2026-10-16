@@ -1,40 +1,78 @@
 ---
+import archivesHero from '../assets/heroes/unrealyria-archives-hero-v1.png';
 import brandHero from '../assets/heroes/unrealyria-brand-home-v1.png';
 import brandHeroMobile from '../assets/heroes/unrealyria-brand-home-mobile-v1.png';
-import ContentTeaser from '../components/ContentTeaser.astro';
+import gatewayArt from '../assets/heroes/unrealyria-gateway-home-city-v1.png';
+import musicHero from '../assets/heroes/unrealyria-music-hero-v1.png';
+import sagasHero from '../assets/heroes/unrealyria-sagas-hero-v1.png';
+import storiesHero from '../assets/heroes/unrealyria-stories-hero-v1.png';
+import ExploreCard from '../components/ExploreCard.astro';
+import FeaturedSaga from '../components/FeaturedSaga.astro';
 import Hero from '../components/Hero.astro';
-import SagaCard from '../components/SagaCard.astro';
+import LatestMusic from '../components/LatestMusic.astro';
+import Pillars from '../components/Pillars.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { content } from '../lib/cms';
-import { chapterPath, chapterSlug, musicPath, sagasPath, storiesPath } from '../lib/paths';
+import {
+  archivesPath,
+  chapterPath,
+  chapterSlug,
+  musicPath,
+  sagaPath,
+  sagasPath,
+  storiesPath,
+} from '../lib/paths';
 import { sagaKeyArt } from '../lib/saga-art';
 import { HOME_HERO_ART, SITE } from '../lib/site';
+import '../styles/home.css';
 
 const sagas = await content.getSagas();
-const worlds = sagas.map((saga) => ({ saga, art: sagaKeyArt(saga.id) }));
 
-const music = (await content.getAllMusic()).slice(0, 4);
-const storyFiles = (await content.getAllStoryFiles()).slice(0, 4);
-const chapters = await content.getAllChapters();
-const chapterIndex = new Map(chapters.map((chapter) => [chapter.id, chapter]));
+const explore = [
+  {
+    href: sagasPath(),
+    label: 'Sagas',
+    description: 'Every published saga in the universe.',
+    art: sagasHero,
+  },
+  {
+    href: musicPath(),
+    label: 'Music',
+    description: 'Original soundtracks from the sagas.',
+    art: musicHero,
+  },
+  {
+    href: storiesPath(),
+    label: 'Stories',
+    description: 'Story files that accompany the chapters.',
+    art: storiesHero,
+  },
+  {
+    href: archivesPath(),
+    label: 'Archives',
+    description: 'Lore entries from across the universe.',
+    art: archivesHero,
+  },
+];
 
-const musicItems = music.map((track) => ({
-  key: track.id,
-  title: track.data.title,
-  meta: track.data.credits,
-}));
+const featured = sagas.find((saga) => saga.data.featured) ?? sagas[0];
+const featuredArt = featured ? sagaKeyArt(featured.id) : undefined;
+const featuredChapters = featured ? await content.getChapters(featured.id) : [];
 
-const storyItems = storyFiles.map((file) => {
-  const chapter = chapterIndex.get(file.data.chapter.id);
-  return {
-    key: file.id,
-    title: file.data.title,
-    description: file.data.summary,
-    kind: chapter ? `Chapter ${chapter.data.number} · ${chapter.data.title}` : 'Story file',
-    href: chapter ? chapterPath(chapter.data.saga.id, chapterSlug(chapter.id)) : undefined,
-  };
-});
+// Final CTA destination: the first *published* chapter of the featured saga
+// (Welcome World), falling back to the saga page — never an invented URL.
+const firstChapter = featuredChapters[0];
+const journeyHref = featured
+  ? firstChapter
+    ? chapterPath(featured.id, chapterSlug(firstChapter.id))
+    : sagaPath(featured.id)
+  : sagasPath();
+
+// Latest published track (deterministic ordering: newest by releaseDate).
+const latestTrack = (await content.getAllMusic())[0];
+const latestSagaId = latestTrack?.data.saga?.id;
+const latestSaga = latestSagaId ? sagas.find((saga) => saga.id === latestSagaId) : undefined;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -64,238 +102,277 @@ const jsonLd = {
     align="start"
   >
     <Fragment slot="actions">
-      <a class="btn btn--primary btn--lg" href={sagasPath()}>
+      <a class="btn btn--primary cta-primary" href={sagasPath()}>
         Explore the Universe <span class="btn__arrow" aria-hidden="true">→</span>
       </a>
-      <a class="btn btn--ghost" href={musicPath()}>Listen to the Music</a>
+      <a class="cta-link" href={musicPath()}>
+        <span class="cta-link__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+        </span>
+        Listen to the Music
+      </a>
     </Fragment>
   </Hero>
 
-  <section class="section" aria-labelledby="intro-heading">
-    <div class="container">
-      <div class="intro">
-        <div class="intro__head">
-          <p class="eyebrow">The project</p>
-          <h2 id="intro-heading" class="intro__title display">
-            A creative universe, told in music and words
-          </h2>
-        </div>
-        <div class="intro__body">
-          <p class="lede">
-            UnreaLyria is an independent creative project. It brings together original music,
-            narrative fiction and anime-inspired imagery, built around worlds that are still being
-            written.
-          </p>
-          <p>
-            Every saga is a self-contained story with its own cast and world, and each soundtrack is
-            composed as part of the world it belongs to — so the music and the fiction move together
-            rather than sit side by side.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
+  {/* Scoped Home AAAA design foundation — applies only to the sections below
+      the hero (see src/styles/home.css). The hero itself is untouched. */}
+  <div class="home-aaaa">
+  <Pillars />
+
+  {featured && <FeaturedSaga saga={featured} chapters={featuredChapters} art={featuredArt?.image} />}
 
   <section class="section section--tight" id="worlds" aria-labelledby="worlds-heading">
-    <div class="container">
-      <SectionHeading
-        eyebrow="The worlds"
-        title="Explore the Worlds"
-        id="worlds-heading"
-        link={{ href: sagasPath(), label: 'All sagas' }}
-      />
-      <ul class="grid-cards">
+    <div class="aaaa-container">
+      <SectionHeading title="Explore the Universe" id="worlds-heading" />
+      <p class="lede explore__subtitle">Different worlds. The same soul.</p>
+      <ul class="explore-grid">
         {
-          worlds.map(({ saga, art }) => (
-            <SagaCard saga={saga} art={art?.image} artAlt={art?.alt} />
+          explore.map((item) => (
+            <ExploreCard
+              href={item.href}
+              label={item.label}
+              description={item.description}
+              art={item.art}
+            />
           ))
         }
       </ul>
     </div>
   </section>
 
-  <section class="section section--tight" aria-labelledby="sound-heading">
-    <div class="container">
-      <SectionHeading
-        eyebrow="Sound & story"
-        title="Where the music and the story meet"
-        id="sound-heading"
+  {latestTrack && <LatestMusic track={latestTrack} saga={latestSaga} />}
+
+  <section class="gateway" id="gateway" aria-labelledby="cta-heading">
+    <div class="gateway__media" aria-hidden="true">
+      <img
+        src={gatewayArt.src}
+        width={gatewayArt.width}
+        height={gatewayArt.height}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        class="gateway__image"
       />
-      <p class="lede section-lede">
-        Music on UnreaLyria is written for the worlds it belongs to. Each piece sits alongside the
-        chapters and story files that share its themes.
-      </p>
-
-      <div class="split">
-        <div class="split__col">
-          <div class="split__head">
-            <h3 class="split__title display">Music</h3>
-            <a class="split__link" href={musicPath()}>All music →</a>
-          </div>
-          {
-            musicItems.length > 0 ? (
-              <ul class="grid-teasers">
-                {musicItems.map((item) => (
-                  <ContentTeaser kind="Track" title={item.title} meta={item.meta} href={musicPath()} />
-                ))}
-              </ul>
-            ) : (
-              <p class="meta">The first soundtrack is being prepared.</p>
-            )
-          }
-        </div>
-
-        <div class="split__col">
-          <div class="split__head">
-            <h3 class="split__title display">Stories</h3>
-            <a class="split__link" href={storiesPath()}>All stories →</a>
-          </div>
-          {
-            storyItems.length > 0 ? (
-              <ul class="grid-teasers">
-                {storyItems.map((item) => (
-                  <ContentTeaser
-                    kind={item.kind}
-                    title={item.title}
-                    description={item.description}
-                    href={item.href}
-                  />
-                ))}
-              </ul>
-            ) : (
-              <p class="meta">Story files appear here as chapters are published.</p>
-            )
-          }
-        </div>
-      </div>
     </div>
-  </section>
-
-  <section class="section section--tight" aria-labelledby="cta-heading">
-    <div class="container">
-      <div class="final-cta">
-        <p class="eyebrow">Enter</p>
-        <h2 id="cta-heading" class="final-cta__title display">Step into the UnreaLyria universe</h2>
-        <p class="lede final-cta__text">
-          Start with the first published saga, or begin with the music that shapes it.
+    <div class="aaaa-container gateway__inner">
+      <div class="gateway__content">
+        <span class="final-cta__rule" aria-hidden="true"></span>
+        <p class="aaaa-eyebrow final-cta__eyebrow">Your next world awaits</p>
+        <h2 id="cta-heading" class="final-cta__title display">Every world begins with a story.</h2>
+        <p class="final-cta__text">
+          One night. A thousand possibilities. Discover where LYRIA's journey begins.
         </p>
         <div class="final-cta__actions">
-          <a class="btn btn--primary btn--lg" href={sagasPath()}>
-            Explore the Worlds <span class="btn__arrow" aria-hidden="true">→</span>
+          <a class="btn btn--primary btn--lg" href={journeyHref}>
+            Begin the Journey <span class="btn__arrow" aria-hidden="true">→</span>
           </a>
-          <a class="btn btn--ghost" href={musicPath()}>Listen to the Music</a>
         </div>
       </div>
     </div>
   </section>
+  </div>
 </BaseLayout>
 
 <style>
-  .intro {
-    display: grid;
-    gap: var(--space-lg);
-    align-items: start;
+  /* Hero CTAs — scoped editorial refinements (Home only; global .btn untouched). */
+  .btn.cta-primary {
+    min-height: 44px;
+    padding: 0.75rem 1.4rem;
+    border-radius: var(--radius-md);
+    font-size: var(--step-0);
   }
 
-  .intro__title {
-    margin: 0;
-    font-size: var(--step-3);
-    max-width: 20ch;
-  }
-
-  .intro__body {
-    max-width: 46rem;
-  }
-
-  .intro__body p:last-child {
-    margin-bottom: 0;
-  }
-
-  .section-lede {
-    margin-top: calc(-1 * var(--space-sm));
-    margin-bottom: var(--space-xl);
-  }
-
-  .split {
-    display: grid;
-    gap: var(--space-xl);
-  }
-
-  .split__head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-  }
-
-  .split__title {
-    margin: 0;
-    font-size: var(--step-2);
-  }
-
-  .split__link {
-    font-size: var(--step--1);
+  .cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.4rem 0.25rem;
+    color: var(--color-text);
+    font-size: var(--step-0);
     font-weight: 600;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     text-decoration: none;
-    white-space: nowrap;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 32%, transparent);
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
   }
 
-  .final-cta {
+  .cta-link:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .cta-link__icon {
+    display: inline-flex;
+  }
+
+  .cta-link__icon svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  .explore__subtitle {
+    margin: calc(-1 * var(--space-sm)) 0 var(--space-lg);
+    max-width: 46ch;
+  }
+
+  .explore-grid {
+    display: grid;
+    gap: var(--aaaa-gap);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (max-width: 64rem) {
+    .explore-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 36rem) {
+    .explore-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* The source PNG sets the scene's height so neither character is cropped. */
+  .gateway {
     position: relative;
+    isolation: isolate;
     overflow: hidden;
-    padding: clamp(2.5rem, 1.5rem + 5vw, 4.5rem);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    background: var(--gradient-surface);
-    box-shadow: var(--shadow-md);
-    text-align: center;
+    display: grid;
+    scroll-margin-top: 6rem;
+    background: var(--aaaa-bg);
   }
 
-  .final-cta::before {
-    content: "";
-    position: absolute;
-    inset: -60% 10% auto;
-    height: 160%;
-    background: radial-gradient(
-      50% 60% at 50% 0%,
-      color-mix(in srgb, var(--color-primary) 26%, transparent),
-      transparent 70%
-    );
-    pointer-events: none;
+  .gateway__inner {
+    grid-area: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    z-index: 1;
+    min-width: 0;
   }
 
-  .final-cta > * {
+  .gateway__content {
     position: relative;
+    z-index: 1;
+    width: 40%;
+    max-width: 28rem;
+    padding-block: var(--space-lg);
+  }
+
+  .gateway__media {
+    position: relative;
+    grid-area: 1 / 1;
+    min-width: 0;
+  }
+
+  .gateway__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(to bottom,
+        color-mix(in srgb, var(--aaaa-bg) 95%, transparent),
+        color-mix(in srgb, var(--aaaa-bg) 70%, transparent) 2%,
+        color-mix(in srgb, var(--aaaa-bg) 25%, transparent) 4%,
+        transparent 6%, transparent 95%, var(--aaaa-bg)),
+      linear-gradient(to left,
+        color-mix(in srgb, var(--aaaa-bg) 96%, transparent),
+        color-mix(in srgb, var(--aaaa-bg) 88%, transparent) 24%,
+        color-mix(in srgb, var(--aaaa-bg) 48%, transparent) 42%,
+        transparent 62%);
+  }
+
+  .gateway__image {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .final-cta__rule {
+    display: block;
+    width: 3.5rem;
+    height: 1px;
+    margin-bottom: var(--space-md);
+    background: linear-gradient(to right, var(--aaaa-gold), var(--color-primary));
+  }
+
+  .final-cta__eyebrow {
+    margin: 0 0 var(--space-xs);
+    color: color-mix(in srgb, var(--aaaa-gold) 80%, var(--color-text));
   }
 
   .final-cta__title {
-    margin: 0 auto var(--space-sm);
-    font-size: var(--step-3);
-    max-width: 24ch;
+    margin: 0 0 var(--space-sm);
+    max-width: 18ch;
+    font-size: clamp(2rem, 1.2rem + 2vw, 3rem);
+    line-height: 1.08;
+    text-wrap: balance;
   }
 
   .final-cta__text {
-    margin: 0 auto var(--space-lg);
-    max-width: 46ch;
+    margin: 0 0 var(--space-md);
+    max-width: 43ch;
+    color: color-mix(in srgb, var(--color-text) 90%, var(--color-muted));
+    font-size: var(--step-0);
+    line-height: 1.65;
+    text-wrap: pretty;
   }
 
   .final-cta__actions {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     gap: var(--space-sm);
   }
 
-  @media (min-width: 56rem) {
-    .intro {
-      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-      gap: var(--space-2xl);
+  .final-cta__actions .btn {
+    min-height: 44px;
+    padding: 0.85rem 1.5rem;
+    font-size: var(--step-0);
+    background-image: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-primary) 90%, var(--aaaa-bg)),
+      color-mix(in srgb, var(--color-primary) 72%, var(--aaaa-bg))
+    );
+  }
+
+  @media (min-width: 64rem) and (max-width: 79.9375rem) {
+    .gateway__content {
+      width: 34%;
+    }
+  }
+
+  @media (max-width: 63.9375rem) {
+    .gateway {
+      display: block;
     }
 
-    .split {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .gateway__inner {
+      display: block;
+    }
+
+    .gateway__content {
+      width: 100%;
+      padding-block: var(--space-sm) var(--space-lg);
+      max-width: 35rem;
+    }
+
+    .gateway__media::after {
+      background: linear-gradient(to bottom,
+        color-mix(in srgb, var(--aaaa-bg) 95%, transparent),
+        color-mix(in srgb, var(--aaaa-bg) 70%, transparent) 2%,
+        color-mix(in srgb, var(--aaaa-bg) 25%, transparent) 4%,
+        transparent 6%, transparent 95%, var(--aaaa-bg));
+    }
+
+    .final-cta__title {
+      max-width: 20ch;
     }
   }
 

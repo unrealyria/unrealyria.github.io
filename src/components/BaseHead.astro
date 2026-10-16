@@ -12,6 +12,7 @@ interface Props {
   imageHeight?: number;
   type?: 'website' | 'article' | 'book';
   noindex?: boolean;
+  noCanonical?: boolean;
 }
 
 const {
@@ -23,6 +24,7 @@ const {
   imageHeight,
   type = 'website',
   noindex = false,
+  noCanonical = false,
 } = Astro.props;
 
 const siteUrl = Astro.site ?? new URL(SITE.url);
@@ -47,7 +49,7 @@ const ogType = useOverride ? undefined : OG_IMAGE.type;
 
 <title>{title}</title>
 <meta name="description" content={description} />
-<link rel="canonical" href={canonical} />
+{!noCanonical && <link rel="canonical" href={canonical} />}
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 
 <link rel="icon" type="image/svg+xml" href={withBase('favicon.svg')} />

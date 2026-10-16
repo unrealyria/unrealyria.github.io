@@ -1,14 +1,15 @@
 {
   "title": "The Virtual World Saga",
   "shortTitle": "Virtual World",
+  "tagline": "One Face. Infinite Lives. Infinite Worlds.",
   "summary": "When the boundary between a simulated reality and the world that built it begins to thin, a handful of travellers must decide what is real enough to protect.",
   "order": 1,
   "status": "published",
   "locale": "en",
   "featured": true,
   "tags": ["virtual-world", "lyria", "science-fantasy"],
-  "image": "/placeholder.svg",
-  "imageAlt": "Neutral landscape artwork placeholder for The Virtual World Saga.",
+  "image": "/images/sagas/virtual-world/virtual-world-cover-v1.webp",
+  "imageAlt": "Lyria seated on a flowered stone ledge overlooking the floating citadel, waterfalls and arched bridges of the Virtual World at twilight.",
   "imagePortrait": "/placeholder-portrait.svg",
   "imagePortraitAlt": "Neutral portrait artwork placeholder for The Virtual World Saga.",
   "theme": {

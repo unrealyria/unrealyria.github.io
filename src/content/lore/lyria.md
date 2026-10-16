@@ -10,5 +10,4 @@ locale: en
 
 LYRIA is the name given to the presence that keeps the Virtual World coherent.
 Whether it is a person, a place, or a promise is a question the saga keeps
-deliberately open. No canonical visual representation has been approved yet, so
-this site uses neutral placeholders only.
+deliberately open.

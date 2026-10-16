@@ -1,6 +1,8 @@
 ---
+import musicHero from '../../assets/heroes/unrealyria-music-hero-v1.png';
 import ContentTeaser from '../../components/ContentTeaser.astro';
 import EmptyState from '../../components/EmptyState.astro';
+import Hero from '../../components/Hero.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { content } from '../../lib/cms';
 import { sagaPath } from '../../lib/paths';
@@ -38,17 +40,20 @@ const items = tracks.map((track) => {
   title="Music"
   description="Music from the published sagas of the UnreaLyria universe."
 >
+  <Hero
+    variant="cinematic"
+    eyebrow="Soundtrack"
+    title="Music"
+    tagline="Music associated with the published sagas. Audio players will follow once releases are approved."
+    image={musicHero}
+    imageAlt="Lyria playing an electric guitar on a rooftop at sunset, the city skyline glowing behind her."
+    align="start"
+    focus="60% 28%"
+    focusMobile="58% 20%"
+  />
+
   <section class="section">
     <div class="container">
-      <header class="page-head">
-        <p class="eyebrow">Soundtrack</p>
-        <h1 class="page-head__title display">Music</h1>
-        <p class="lede">
-          Music associated with the published sagas. Audio players will follow once releases are
-          approved.
-        </p>
-      </header>
-
       {
         items.length === 0 ? (
           <EmptyState

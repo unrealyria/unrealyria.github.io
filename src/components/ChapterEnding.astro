@@ -1,0 +1,75 @@
+---
+import type { ImageMetadata } from 'astro';
+import ChapterCollection from './ChapterCollection.astro';
+
+interface Props {
+  chapterTitle: string;
+  chapterNumber: string;
+  chapterUrl: string;
+  sagaTitle: string;
+  sagaUrl: string;
+  artwork: ImageMetadata;
+  srcDir: string;
+  readerId: string;
+}
+const { chapterTitle, chapterNumber, chapterUrl, sagaTitle, sagaUrl, artwork, srcDir, readerId } = Astro.props;
+---
+
+<div class="container chapter-ending">
+  <section class="ending" aria-labelledby="chapter-ending-heading">
+    <div>
+      <p class="eyebrow">Chapter {chapterNumber} <span aria-hidden="true">·</span> {chapterTitle}</p>
+      <h2 id="chapter-ending-heading" class="display">The Journey Begins</h2>
+    </div>
+    <a class="ending__saga" href={sagaUrl}>{sagaTitle} <span aria-hidden="true">→</span></a>
+  </section>
+
+  <ChapterCollection srcDir={srcDir} readerId={readerId} />
+
+  <section class="explore" aria-labelledby="chapter-explore-heading">
+    <div class="explore__scene" aria-hidden="true">
+      <img src={artwork.src} width={artwork.width} height={artwork.height} alt="" loading="lazy" decoding="async" />
+    </div>
+    <div class="explore__copy">
+      <p class="eyebrow">Continue Exploring</p>
+      <h2 id="chapter-explore-heading" class="display">{sagaTitle}</h2>
+      <a class="btn btn--primary" href={sagaUrl}>Explore the Saga <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+  <p class="permalink"><a href={chapterUrl}>Chapter permalink</a></p>
+</div>
+
+<style>
+  .chapter-ending { min-width: 0; }
+  .eyebrow { margin: 0 0 .8rem; color: var(--color-muted); font-size: var(--step--1); letter-spacing: .16em; text-transform: uppercase; }
+  .ending { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding-block: clamp(2rem, 4vw, 4rem); }
+  .ending::before { content: ''; pointer-events: none; position: absolute; inset: -2rem 0; z-index: -1; background: radial-gradient(ellipse at 50% 50%, var(--color-primary-soft), transparent 70%); mask-image: linear-gradient(90deg, transparent, black 15%, black 85%, transparent); }
+  .ending h2 { margin: 0; font-size: var(--step-4); line-height: 1.12; }
+  .ending__saga { display: inline-flex; align-items: center; gap: 1rem; min-height: 44px; text-underline-offset: .35em; font-size: var(--step--1); }
+  .explore { display: grid; isolation: isolate; position: relative; margin-top: clamp(1.5rem, 3vw, 2.5rem); }
+  .explore__scene, .explore__copy { grid-area: 1 / 1; min-width: 0; }
+  .explore__scene { position: relative; z-index: -1; }
+  .explore__scene img { display: block; width: 100%; height: auto; }
+  .explore__scene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, var(--color-bg), transparent 14%, transparent 80%, var(--color-bg)), linear-gradient(90deg, transparent 40%, color-mix(in srgb, var(--color-bg) 85%, transparent) 65%, var(--color-bg)); }
+  .explore__copy { align-self: center; justify-self: end; width: 36%; padding: 2rem 1.5rem 2rem 0; }
+  .explore h2 { margin: 0 0 1.5rem; font-size: var(--step-3); line-height: 1.15; text-wrap: balance; }
+  .explore .btn { background: linear-gradient(110deg, color-mix(in srgb, var(--color-primary) 90%, var(--color-bg)), color-mix(in srgb, var(--color-primary) 72%, var(--color-bg))); color: var(--color-text); box-shadow: none; }
+  .permalink { margin: 1.5rem 0 0; text-align: right; font-size: var(--step--1); }
+  .permalink a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-muted); text-underline-offset: .3em; }
+  @media (max-width: 48rem) {
+    .ending { align-items: flex-start; flex-direction: column; gap: .5rem; padding-block: .75rem 1.5rem; }
+    .ending .eyebrow { margin-bottom: .6rem; letter-spacing: .12em; }
+    .ending h2 { max-width: 14ch; font-size: clamp(2.1rem, 8vw, 3rem); text-wrap: balance; }
+    .ending__saga { gap: .75rem; }
+    .explore { display: flex; flex-direction: column; margin-top: 1rem; background: radial-gradient(ellipse at 50% 55%, var(--color-primary-soft), transparent 65%), var(--color-bg); }
+    .explore__scene::after { background: linear-gradient(180deg, var(--color-bg), transparent 12%, transparent 78%, var(--color-bg)); }
+    .explore__copy { align-self: stretch; width: auto; padding: .85rem 1.25rem 1.5rem; background: linear-gradient(180deg, var(--color-bg), transparent 30%); }
+    .explore__copy .eyebrow { margin-bottom: .65rem; color: var(--color-accent); font-size: .75rem; letter-spacing: .14em; }
+    .explore h2 { max-width: 20rem; margin-bottom: 1.1rem; font-size: clamp(1.8rem, 6.6vw, 2.5rem); }
+    .explore .btn { min-height: 48px; padding: .8rem 1.25rem; }
+    .permalink { text-align: left; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .explore .btn { transition: none; transform: none; }
+  }
+</style>

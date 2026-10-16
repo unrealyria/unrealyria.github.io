@@ -7,8 +7,8 @@ order: 1
 status: published
 locale: en
 publishedAt: 2026-01-15
-image: /placeholder.svg
-imageAlt: Neutral landscape artwork placeholder for Chapter 01 — Welcome World.
+image: /images/sagas/virtual-world/chapters/01-welcome-world/welcome-world-cover-v1.webp
+imageAlt: Lyria adjusting a VR headset as the floating citadel and skies of the Virtual World appear around her.
 imagePortrait: /placeholder-portrait.svg
 imagePortraitAlt: Neutral portrait artwork placeholder for Chapter 01 — Welcome World.
 ---

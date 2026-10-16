@@ -22,6 +22,7 @@ const sagas = defineCollection({
   schema: z.object({
     title: z.string(),
     shortTitle: z.string().optional(),
+    tagline: z.string().optional(),
     summary: z.string(),
     order: z.number().int().nonnegative(),
     status: statusSchema,
@@ -91,8 +92,33 @@ const music = defineCollection({
     credits: z.string().optional(),
     mood: z.string().optional(),
     durationSeconds: z.number().int().nonnegative().optional(),
+    // Playable audio file (direct media URL) — not a generic external link.
     audioUrl: z.url().optional(),
+    // Canonical artwork reference (public path or approved asset) + alt text.
+    artwork: z.string().optional(),
+    artworkAlt: z.string().optional(),
+    // Real, verified external destinations only (leave empty otherwise).
+    youtubeUrl: z.url().optional(),
+    // Audio platforms. `provider` is optional for retro-compatibility; when set
+    // it drives the label/icon in the Chapter Music Hub. Only HTTPS URLs.
+    streamingLinks: z
+      .array(
+        z.object({
+          provider: z
+            .enum(['youtube', 'audiocom', 'soundcloud', 'spotify', 'applemusic', 'bandcamp', 'other'])
+            .optional(),
+          label: z.string(),
+          url: z.url(),
+        }),
+      )
+      .default([]),
+    // A track belongs to a saga and, when coherent, to a specific chapter.
     saga: reference('sagas').optional(),
+    chapter: reference('chapters').optional(),
+    // Publication date (ISO) driving newest-first ordering.
+    releaseDate: z.coerce.date().optional(),
+    // Explicit editorial selection for the Latest Music slot.
+    featured: z.boolean().default(false),
     status: statusSchema,
     locale: localeSchema,
   }),

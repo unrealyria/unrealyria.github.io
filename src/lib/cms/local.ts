@@ -2,6 +2,18 @@ import { getCollection } from 'astro:content';
 import { chapterSlug } from '../paths';
 import type { Chapter, ContentSource, LoreEntry, MusicTrack, Saga, StoryFile } from './types';
 
+// Music ordering: newest first by `releaseDate`. Records without a date keep a
+// stable alphabetical fallback and sort after dated releases, so the selection
+// stays deterministic while the CMS is progressively enriched.
+function byReleaseDateDesc(a: MusicTrack, b: MusicTrack): number {
+  const aTime = a.data.releaseDate ? a.data.releaseDate.getTime() : Number.NEGATIVE_INFINITY;
+  const bTime = b.data.releaseDate ? b.data.releaseDate.getTime() : Number.NEGATIVE_INFINITY;
+  if (bTime !== aTime) {
+    return bTime - aTime;
+  }
+  return a.data.title.localeCompare(b.data.title);
+}
+
 async function publishedSagas(): Promise<Saga[]> {
   const entries = await getCollection('sagas', ({ data }) => data.status === 'published');
   return entries.sort((a, b) => a.data.order - b.data.order);
@@ -140,7 +152,7 @@ export const localContentSource: ContentSource = {
       }
       return sagaId ? data.saga.id === sagaId : sagaIds.has(data.saga.id);
     });
-    return entries.sort((a, b) => a.data.title.localeCompare(b.data.title));
+    return entries.sort(byReleaseDateDesc);
   },
 
   async getAllMusic() {
@@ -148,7 +160,7 @@ export const localContentSource: ContentSource = {
     const entries = await getCollection('music', ({ data }) => data.status === 'published');
     return entries
       .filter((entry) => !entry.data.saga || sagaIds.has(entry.data.saga.id))
-      .sort((a, b) => a.data.title.localeCompare(b.data.title));
+      .sort(byReleaseDateDesc);
   },
 };
 

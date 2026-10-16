@@ -1,0 +1,238 @@
+---
+import { resolveArt } from '../lib/art';
+
+export interface BreadcrumbItem {
+  href?: string;
+  label: string;
+}
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  summary?: string;
+  sagaTitle?: string;
+  publishedAt?: Date;
+  image?: string;
+  imageAlt?: string;
+  breadcrumb: BreadcrumbItem[];
+}
+
+const { eyebrow, title, summary, sagaTitle, publishedAt, image, imageAlt, breadcrumb } = Astro.props;
+
+// Uses the official chapter artwork when present; falls back to the shared
+// atmospheric treatment (never a placeholder image).
+const resolvedImage = resolveArt(image);
+---
+
+<section class="chapter-open">
+  {
+    resolvedImage ? (
+      <div class="chapter-open__media">
+        <img
+          class="chapter-open__image"
+          src={resolvedImage}
+          alt={imageAlt ?? ''}
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </div>
+    ) : (
+      <div class="chapter-open__atmos" aria-hidden="true" />
+    )
+  }
+  <div class="chapter-open__scrim" aria-hidden="true" />
+
+  <div class="container container--wide chapter-open__inner">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <ol>
+        {
+          breadcrumb.map((item, index) => {
+            const isLast = index === breadcrumb.length - 1;
+            return (
+              <li>
+                {item.href && !isLast ? (
+                  <a href={item.href}>{item.label}</a>
+                ) : (
+                  <span aria-current={isLast ? 'page' : undefined}>{item.label}</span>
+                )}
+              </li>
+            );
+          })
+        }
+      </ol>
+    </nav>
+
+    <div class="chapter-open__copy">
+      <p class="eyebrow chapter-open__eyebrow">{eyebrow}</p>
+      <h1 class="chapter-open__title display">{title}</h1>
+      {summary && <p class="chapter-open__summary lede">{summary}</p>}
+      <p class="chapter-open__meta">
+        {sagaTitle && <span>{sagaTitle}</span>}
+        {
+          sagaTitle && publishedAt && (
+            <span aria-hidden="true">·</span>
+          )
+        }
+        {
+          publishedAt && (
+            <time datetime={publishedAt.toISOString()}>
+              {publishedAt.toLocaleDateString('en', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </time>
+          )
+        }
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .chapter-open {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .chapter-open__media {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .chapter-open__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Keep the subject (LYRIA / headline artwork) visible without a hard crop. */
+    object-position: center 30%;
+  }
+
+  .chapter-open__atmos {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(
+        70% 80% at 18% 16%,
+        color-mix(in srgb, var(--color-primary) 32%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        60% 70% at 88% 8%,
+        color-mix(in srgb, var(--color-accent) 18%, transparent),
+        transparent 58%
+      ),
+      var(--gradient-surface);
+  }
+
+  /* Directional scrim: protects the copy (left/bottom) without flattening the
+     artwork. */
+  .chapter-open__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      linear-gradient(
+        100deg,
+        color-mix(in srgb, var(--color-bg) 88%, transparent) 0%,
+        color-mix(in srgb, var(--color-bg) 62%, transparent) 44%,
+        transparent 80%
+      ),
+      linear-gradient(
+        to top,
+        color-mix(in srgb, var(--color-bg) 84%, transparent) 0%,
+        transparent 52%
+      );
+  }
+
+  .chapter-open__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-xl);
+    min-height: clamp(24rem, 58vh, 38rem);
+    padding-block: clamp(2rem, 1.25rem + 3.5vw, 4rem);
+  }
+
+  .breadcrumb ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--step--1);
+    color: color-mix(in srgb, var(--color-text) 70%, var(--color-muted));
+  }
+
+  .breadcrumb li {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .breadcrumb li:not(:last-child)::after {
+    content: "/";
+    margin-left: 0.4rem;
+    opacity: 0.5;
+  }
+
+  .breadcrumb a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-text);
+  }
+
+  .chapter-open__copy {
+    max-width: 46rem;
+  }
+
+  .chapter-open__eyebrow {
+    color: color-mix(in srgb, var(--color-accent) 88%, var(--color-text));
+  }
+
+  .chapter-open__title {
+    margin: 0 0 var(--space-sm);
+    font-size: var(--step-5);
+    text-wrap: balance;
+  }
+
+  .chapter-open__summary {
+    margin: 0;
+    max-width: 44ch;
+    color: color-mix(in srgb, var(--color-text) 88%, var(--color-muted));
+  }
+
+  .chapter-open__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: var(--space-md) 0 0;
+    color: color-mix(in srgb, var(--color-text) 70%, var(--color-muted));
+    font-size: var(--step--1);
+  }
+
+  @media (max-width: 47.9375rem) {
+    .chapter-open__inner {
+      min-height: clamp(22rem, 68vh, 32rem);
+    }
+
+    .chapter-open__image {
+      object-position: center 26%;
+    }
+
+    .chapter-open__title {
+      font-size: var(--step-4);
+    }
+  }
+</style>

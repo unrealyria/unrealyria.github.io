@@ -1,0 +1,147 @@
+---
+// Compact editorial band under the hero. The labels mirror the approved AAAA
+// master; the descriptions preserve the meaning of the previous "The project"
+// copy (music written per world, narrative fiction + lore, self-contained
+// sagas, anime-inspired imagery). Icons are inline SVG (no dependency).
+interface Pillar {
+  label: string;
+  description: string;
+  icon: string;
+}
+
+const pillars: Pillar[] = [
+  {
+    label: 'Original Music',
+    description: 'Original soundtracks written for each world.',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l11-2v12"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
+  },
+  {
+    label: 'Epic Stories',
+    description: 'Narrative fiction, characters and deep lore.',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h9a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3z"/><path d="M16 8a3 3 0 0 1 3-3h1v14h-1a3 3 0 0 0-3 3"/></svg>',
+  },
+  {
+    label: 'Unique Sagas',
+    description: 'Self-contained worlds, each with its own destiny.',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 19 6-9 3.5 5L15 12l6 7z"/></svg>',
+  },
+  {
+    label: 'Visual Experiences',
+    description: 'Anime-inspired imagery and cinematic worlds.',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>',
+  },
+];
+---
+
+<section class="pillars" aria-label="What UnreaLyria is">
+  <div class="aaaa-container">
+    <ul class="pillars__list">
+      {
+        pillars.map((pillar) => (
+          <li class="pillars__item">
+            <span class="pillars__icon" aria-hidden="true" set:html={pillar.icon} />
+            <p class="pillars__label">{pillar.label}</p>
+            <p class="pillars__desc">{pillar.description}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  /* Full-width dark-glass band that ties the hero into the featured saga. */
+  .pillars {
+    position: relative;
+    z-index: 2;
+    padding-block: clamp(0.85rem, 0.6rem + 0.9vw, 1.35rem);
+    border-bottom: 1px solid var(--aaaa-border);
+    background: color-mix(in srgb, var(--aaaa-bg) 82%, transparent);
+    -webkit-backdrop-filter: blur(12px) saturate(125%);
+    backdrop-filter: blur(12px) saturate(125%);
+  }
+
+  .pillars__list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pillars__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: clamp(0.6rem, 0.4rem + 0.8vw, 1rem) clamp(0.75rem, 1vw, 1.25rem);
+    text-align: center;
+    border-inline-start: 1px solid var(--aaaa-border);
+  }
+
+  .pillars__item:first-child {
+    border-inline-start: 0;
+  }
+
+  .pillars__icon {
+    display: inline-flex;
+    color: var(--aaaa-gold);
+  }
+
+  .pillars__icon :global(svg) {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+
+  .pillars__label {
+    margin: 0;
+    font-size: var(--step--1);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--aaaa-gold);
+  }
+
+  .pillars__desc {
+    margin: 0;
+    max-width: 26ch;
+    font-size: var(--step--1);
+    color: var(--color-muted);
+    text-wrap: pretty;
+  }
+
+  /* Desktop: a light overlap onto the hero's lower edge for continuity. */
+  @media (min-width: 56rem) {
+    .pillars {
+      margin-top: -1rem;
+    }
+  }
+
+  @media (max-width: 56rem) {
+    .pillars__list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pillars__item:nth-child(odd) {
+      border-inline-start: 0;
+    }
+
+    .pillars__item:nth-child(n + 3) {
+      border-block-start: 1px solid var(--aaaa-border);
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .pillars__list {
+      grid-template-columns: 1fr;
+    }
+
+    .pillars__item {
+      border-inline-start: 0;
+    }
+
+    .pillars__item:not(:first-child) {
+      border-block-start: 1px solid var(--aaaa-border);
+    }
+  }
+</style>

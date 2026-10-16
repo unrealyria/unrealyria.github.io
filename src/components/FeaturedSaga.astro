@@ -1,0 +1,280 @@
+---
+import { Picture } from 'astro:assets';
+import type { Chapter, Saga } from '../lib/cms/types';
+import { chapterPath, chapterSlug, sagaPath } from '../lib/paths';
+
+interface Props {
+  saga: Saga;
+  chapters: Chapter[];
+  art?: ImageMetadata;
+}
+
+const { saga, chapters, art } = Astro.props;
+
+// Presentation title: the saga title without the trailing "Saga" word
+// (e.g. "The Virtual World Saga" → "The Virtual World"). CMS untouched.
+const displayTitle = saga.data.title.replace(/\s+Saga\s*$/i, '').trim() || saga.data.title;
+// Saga identifier, only when present in the data (used as a decorative index).
+const sagaIndex = String(saga.data.order).padStart(2, '0');
+---
+
+<section class="featured" aria-labelledby="featured-heading">
+  <div class="featured__media" aria-hidden="true">
+    {
+      art ? (
+        <Picture
+          src={art}
+          formats={['avif', 'webp']}
+          fallbackFormat="webp"
+          widths={[640, 960, 1280, 1672]}
+          sizes="100vw"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          class="featured__image"
+        />
+      ) : (
+        <div class="featured__atmos" />
+      )
+    }
+    <div class="featured__scrim" />
+  </div>
+
+  <div class="aaaa-container featured__inner">
+    <div class="featured__content">
+      <p class="featured__index" aria-hidden="true">{sagaIndex}</p>
+      <p class="aaaa-eyebrow">Featured saga</p>
+      <h2 id="featured-heading" class="aaaa-title featured__title">{displayTitle}</h2>
+      <p class="featured__summary">{saga.data.summary}</p>
+      <a class="featured__cta" href={sagaPath(saga.id)}>
+        Discover the Saga
+        <span class="featured__cta-arrow" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 12h14" />
+            <path d="m13 6 6 6-6 6" />
+          </svg>
+        </span>
+      </a>
+      {
+        chapters.length > 0 && (
+          <ol class="featured__chapters" aria-label="Published chapters">
+            {chapters.map((chapter) => (
+              <li>
+                <a class="featured__chapter" href={chapterPath(saga.id, chapterSlug(chapter.id))}>
+                  <span class="featured__chapter-num">
+                    {String(chapter.data.number).padStart(2, '0')}
+                  </span>
+                  <span class="featured__chapter-title">{chapter.data.title}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Full-bleed cinematic band: no panel chrome, artwork edge-to-edge. */
+  .featured {
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    overflow: hidden;
+    background: var(--aaaa-bg);
+  }
+
+  .featured__media {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .featured__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: left 32%;
+  }
+
+  .featured__atmos {
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-page);
+  }
+
+  /* Progressive darkening toward the copy side; keeps the vista legible. */
+  .featured__scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--aaaa-bg) 90%, transparent) 0%,
+        transparent 5%
+      ),
+      linear-gradient(
+        to left,
+        color-mix(in srgb, var(--aaaa-bg) 92%, transparent) 0%,
+        color-mix(in srgb, var(--aaaa-bg) 66%, transparent) 46%,
+        transparent 82%
+      ),
+      linear-gradient(
+        to top,
+        color-mix(in srgb, var(--aaaa-bg) 64%, transparent),
+        transparent 42%
+      );
+  }
+
+  .featured__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    min-height: clamp(28rem, 22rem + 12vw, 38rem);
+    padding-block: clamp(2.5rem, 1.5rem + 5vw, 5rem);
+  }
+
+  .featured__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    width: 100%;
+    max-width: min(40rem, 100%);
+  }
+
+  .featured__index {
+    margin: 0 0 var(--space-2xs);
+    font-family: var(--aaaa-display);
+    font-size: var(--step-4);
+    line-height: 1;
+    color: var(--aaaa-gold);
+    opacity: 0.65;
+  }
+
+  .featured__title {
+    font-size: clamp(2.5rem, 1.6rem + 3.4vw, 4.25rem);
+    text-wrap: balance;
+  }
+
+  .featured__summary {
+    margin: var(--space-xs) 0 0;
+    max-width: 44ch;
+    color: color-mix(in srgb, var(--color-text) 86%, var(--color-muted));
+    font-size: var(--step-1);
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+
+  .featured__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    align-self: flex-start;
+    min-height: 44px;
+    margin-top: var(--space-sm);
+    padding: 0.4rem 0;
+    color: var(--color-text);
+    font-size: var(--step-1);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    border-bottom: 1px solid var(--aaaa-gold-line);
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+
+  .featured__cta:hover {
+    color: var(--aaaa-gold);
+    border-color: var(--aaaa-gold);
+  }
+
+  .featured__cta-arrow {
+    display: inline-flex;
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .featured__cta-arrow svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .featured__cta:hover .featured__cta-arrow {
+    transform: translateX(4px);
+  }
+
+  .featured__chapters {
+    display: grid;
+    gap: 0;
+    margin: var(--space-md) 0 0;
+    padding: 0;
+    list-style: none;
+    max-width: 26rem;
+  }
+
+  .featured__chapter {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 44px;
+    padding: 0.35rem 0;
+    border-top: 1px solid var(--aaaa-border);
+    color: var(--color-text);
+    text-decoration: none;
+    transition: color var(--dur) var(--ease);
+  }
+
+  .featured__chapter:hover {
+    color: var(--aaaa-gold);
+  }
+
+  .featured__chapter-num {
+    font-family: var(--aaaa-display);
+    font-variant-numeric: tabular-nums;
+    color: var(--aaaa-gold);
+  }
+
+  .featured__chapter-title {
+    font-size: var(--step--1);
+  }
+
+  /* Mobile: immersive vertical composition — artwork on top with a soft fade
+     into the copy below; no aggressive crop of the character. */
+  @media (max-width: 47.9375rem) {
+    .featured__media {
+      position: relative;
+      aspect-ratio: 4 / 3;
+    }
+
+    .featured__image {
+      object-position: center 30%;
+    }
+
+    .featured__scrim {
+      background: linear-gradient(
+        to top,
+        var(--aaaa-bg) 2%,
+        color-mix(in srgb, var(--aaaa-bg) 70%, transparent) 30%,
+        transparent 62%
+      );
+    }
+
+    .featured__inner {
+      min-height: 0;
+      justify-content: flex-start;
+      padding-block: var(--space-lg) var(--space-xl);
+    }
+
+    .featured__content {
+      max-width: none;
+    }
+  }
+</style>

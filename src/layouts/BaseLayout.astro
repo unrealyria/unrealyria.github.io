@@ -16,6 +16,7 @@ interface Props {
   imageHeight?: number;
   type?: 'website' | 'article' | 'book';
   noindex?: boolean;
+  noCanonical?: boolean;
   lang?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
@@ -30,6 +31,7 @@ const {
   imageHeight,
   type = 'website',
   noindex = false,
+  noCanonical = false,
   lang = Astro.currentLocale ?? SITE.defaultLocale,
   jsonLd,
 } = Astro.props;
@@ -50,6 +52,7 @@ const styleVars = theme ? themeToCssVars(theme) : undefined;
       imageHeight={imageHeight}
       type={type}
       noindex={noindex}
+      noCanonical={noCanonical}
     />
     {
       jsonLd && (

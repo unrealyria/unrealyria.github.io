@@ -1,0 +1,135 @@
+/* ==========================================================================
+   Home AAAA — scoped design foundation
+   Local visual system for the Home sections BELOW the hero only.
+
+   Everything here is namespaced under `.home-aaaa`, so it can never affect the
+   hero, the header, the footer or any internal page. The global brand palette
+   (purple `--color-primary` / teal `--color-accent`) and the site typography
+   stay untouched; a gold/amber accent is introduced here purely as a scoped,
+   saga-agnostic secondary for the upcoming Home sections. Saga pages keep their
+   own themed atmosphere via `themeToCssVars`, so this gold is not a global
+   constraint.
+   ========================================================================== */
+
+.home-aaaa {
+  /* --- Cinematic dark surfaces (neutral UnreaLyria brand) -------------- */
+  --aaaa-bg: color-mix(in srgb, var(--color-bg) 90%, #000);
+  --aaaa-panel: color-mix(in srgb, var(--color-surface) 90%, var(--color-bg));
+  --aaaa-panel-grad: var(--gradient-surface);
+
+  /* --- Scoped secondary accent: gold / amber --------------------------- */
+  /* Fantasy-flavoured, used only by the Home sections below the hero. */
+  --aaaa-gold: #d6aa62;
+  --aaaa-gold-soft: color-mix(in srgb, #d6aa62 18%, transparent);
+  --aaaa-gold-line: color-mix(in srgb, #d6aa62 32%, transparent);
+
+  /* --- Brand identity (kept, exposed for saga-aware accents) ----------- */
+  --aaaa-brand: var(--color-primary);
+  --aaaa-brand-2: var(--color-accent);
+
+  /* --- Text ------------------------------------------------------------ */
+  --aaaa-text: var(--color-text);
+  --aaaa-muted: var(--color-muted);
+
+  /* --- Lines, panels & focus ------------------------------------------- */
+  --aaaa-border: var(--color-border);
+  --aaaa-border-strong: var(--color-border-strong);
+  --aaaa-radius: var(--radius-lg);
+  --aaaa-focus: var(--aaaa-gold);
+
+  /* --- Typography ------------------------------------------------------ */
+  --aaaa-display: var(--font-display);
+  --aaaa-eyebrow-tracking: 0.24em;
+
+  /* --- Rhythm & grids -------------------------------------------------- */
+  --aaaa-pad: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+  --aaaa-gap: clamp(1rem, 0.6rem + 1.6vw, 1.75rem);
+  --aaaa-grid-min: 16rem;
+  --aaaa-container: 90rem;
+}
+
+/* Cinematic content container for the Home sections below the hero: wider than
+   the default `.container`, with responsive side margins. */
+.home-aaaa .aaaa-container {
+  width: min(100% - clamp(1.5rem, 5vw, 5rem), var(--aaaa-container));
+  margin-inline: auto;
+}
+
+/* Eyebrow — uppercase, letter-spaced, gold. */
+.home-aaaa .aaaa-eyebrow {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: var(--aaaa-eyebrow-tracking);
+  text-transform: uppercase;
+  color: var(--aaaa-gold);
+}
+
+/* Display title — serif, balanced. */
+.home-aaaa .aaaa-title {
+  margin: 0;
+  font-family: var(--aaaa-display);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  font-size: var(--step-3);
+  color: var(--aaaa-text);
+  text-wrap: balance;
+}
+
+/* Panel — dark surface, thin border, subtle depth. */
+.home-aaaa .aaaa-panel {
+  position: relative;
+  padding: var(--aaaa-pad);
+  border: 1px solid var(--aaaa-border);
+  border-radius: var(--aaaa-radius);
+  background: var(--aaaa-panel-grad);
+  box-shadow: var(--shadow-md);
+}
+
+/* Divider — hairline gold rule. */
+.home-aaaa .aaaa-divider {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--aaaa-gold-line);
+}
+
+/* Overlay — bottom gradient for image cards. */
+.home-aaaa .aaaa-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--aaaa-bg) 92%, transparent) 0%,
+    color-mix(in srgb, var(--aaaa-bg) 40%, transparent) 44%,
+    transparent 78%
+  );
+  pointer-events: none;
+}
+
+/* Grid — auto-fit responsive columns for the upcoming sections. */
+.home-aaaa .aaaa-grid {
+  display: grid;
+  gap: var(--aaaa-gap);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--aaaa-grid-min)), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Focus — visible ring within the scoped region. */
+.home-aaaa :focus-visible {
+  outline: 2px solid var(--aaaa-focus);
+  outline-offset: 3px;
+}
+
+/* Reduced motion — mirror the global behaviour inside the scope. */
+@media (prefers-reduced-motion: reduce) {
+  .home-aaaa *,
+  .home-aaaa *::before,
+  .home-aaaa *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

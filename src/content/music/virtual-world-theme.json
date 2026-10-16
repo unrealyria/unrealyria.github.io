@@ -3,7 +3,11 @@
   "credits": "unrealyria",
   "mood": "wonder, unease",
   "durationSeconds": 214,
+  "youtubeUrl": "https://www.youtube.com/watch?v=m82MM7fS0ic",
+  "artwork": "/images/sagas/virtual-world/chapters/01-welcome-world/welcome-world-cover-v1.webp",
+  "artworkAlt": "Lyria adjusting a VR headset as the floating citadel and skies of the Virtual World appear around her.",
   "saga": "virtual-world",
+  "chapter": "virtual-world/01-welcome-world",
   "status": "published",
   "locale": "en"
 }

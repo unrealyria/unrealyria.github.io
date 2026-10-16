@@ -9,9 +9,12 @@ interface Props {
   chapter?: Chapter;
   eyebrow?: string;
   priority?: boolean;
+  // Optional page-scoped editorial description. Falls back to the canonical
+  // saga summary from the content layer when not provided.
+  summary?: string;
 }
 
-const { saga, chapter, eyebrow = 'Featured saga', priority = false } = Astro.props;
+const { saga, chapter, eyebrow = 'Featured saga', priority = false, summary } = Astro.props;
 
 const imageAlt = saga.data.imageAlt ?? `Key visual for ${saga.data.title}.`;
 const resolvedImage = resolveArt(saga.data.image);
@@ -48,7 +51,7 @@ const ctaLabel =
     <div class="saga-feature__copy">
       <p class="eyebrow">{eyebrow}</p>
       <h2 class="saga-feature__title display">{saga.data.title}</h2>
-      <p class="saga-feature__summary">{saga.data.summary}</p>
+      <p class="saga-feature__summary">{summary ?? saga.data.summary}</p>
       {
         saga.data.tags.length > 0 && (
           <ul class="tag-list saga-feature__tags" aria-label="Tags">
@@ -119,7 +122,7 @@ const ctaLabel =
     inset: 0;
     background:
       linear-gradient(
-        100deg,
+        260deg,
         color-mix(in srgb, var(--color-bg) 90%, transparent) 0%,
         color-mix(in srgb, var(--color-bg) 66%, transparent) 46%,
         transparent 82%
@@ -130,10 +133,13 @@ const ctaLabel =
   .saga-feature__inner {
     position: relative;
     z-index: 1;
+    display: flex;
+    justify-content: flex-end;
     padding-block: clamp(3rem, 2rem + 9vw, 7rem);
   }
 
   .saga-feature__copy {
+    width: 100%;
     max-width: 44rem;
   }
 

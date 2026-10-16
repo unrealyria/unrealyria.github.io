@@ -1,0 +1,368 @@
+---
+import path from 'node:path';
+import { discoverComicCollections } from '../lib/comic';
+import { withBase } from '../lib/paths';
+
+interface Props {
+  srcDir: string;
+  label?: string;
+}
+
+const { srcDir, label } = Astro.props;
+
+const collections = discoverComicCollections(path.join(process.cwd(), 'public'), srcDir).map((collection) => ({
+  ...collection,
+  pages: collection.pages.map((page) => ({
+    ...page,
+    url: withBase(`${collection.directory.replace(/^\/+/, '')}/${page.name}`),
+  })),
+}));
+const initial = collections[0];
+const total = initial?.pages.length ?? 0;
+const pad = Math.max(2, String(total).length);
+---
+
+{
+  total > 0 && (
+    <section class="comic-reader" data-comic-reader aria-label="Chapter comic" style={`--comic-stage-ratio: ${initial.stageRatio}`}>
+      <label class="comic-reader__collection-label">
+        Collection
+        <select class="comic-reader__select" data-comic-select disabled>
+          {collections.map((collection) => (
+            <option value={collection.id}>{collection.label}</option>
+          ))}
+        </select>
+      </label>
+      <div
+        class="comic-reader__viewport"
+        data-comic-viewport
+        tabindex="0"
+        role="group"
+        aria-roledescription="comic page viewer"
+        aria-label="Comic pages — use the arrow keys to navigate"
+      >
+        <div class="comic-reader__track" data-comic-track>
+          {collections.map((collection, collectionIndex) => (
+            <div
+              class="comic-reader__collection"
+              data-comic-collection={collection.id}
+              data-label={collection.label}
+              data-stage-ratio={collection.stageRatio}
+              hidden={collectionIndex !== 0}
+            >
+              {collection.pages.map((page, index) => (
+                <figure class="comic-reader__page" data-comic-page data-index={index} hidden={index !== 0}>
+                  <img
+                    src={page.url}
+                    alt={`${label ? `${label} — ` : ''}${collection.label} — Page ${page.order}`}
+                    width={page.width}
+                    height={page.height}
+                    loading="lazy"
+                    decoding="async"
+                    draggable="false"
+                  />
+                </figure>
+              ))}
+            </div>
+          ))}
+        </div>
+
+            <div class="comic-reader__controls">
+              <button type="button" class="comic-reader__nav" data-comic-prev aria-label="Previous page" disabled>
+                <span aria-hidden="true">←</span>
+              </button>
+              <p class="comic-reader__counter" data-comic-counter aria-live="polite">
+                {String(1).padStart(pad, '0')} / {String(total).padStart(pad, '0')}
+              </p>
+              <button type="button" class="comic-reader__nav" data-comic-next aria-label="Next page" disabled>
+                <span aria-hidden="true">→</span>
+              </button>
+              <button
+                type="button"
+                class="comic-reader__fullscreen"
+                data-comic-fullscreen
+                aria-label="View fullscreen"
+                hidden
+              >
+                <span aria-hidden="true">⛶</span>
+              </button>
+            </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .comic-reader {
+    margin: 0;
+  }
+
+  .comic-reader__collection-label {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    font-size: var(--step--1);
+    color: var(--color-muted);
+  }
+
+  .comic-reader__select {
+    min-height: 44px;
+    max-width: 100%;
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+  }
+
+  .comic-reader__viewport:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 4px;
+    border-radius: var(--radius-md);
+  }
+
+  .comic-reader__track {
+    position: relative;
+    display: block;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-2);
+    overflow: hidden;
+    aspect-ratio: var(--comic-stage-ratio);
+    max-height: max(18rem, 78svh);
+  }
+
+  .comic-reader__collection,
+  .comic-reader__page {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+  }
+
+  .comic-reader__collection[hidden],
+  .comic-reader__page[hidden] {
+    display: none;
+  }
+
+  .comic-reader__page img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .comic-reader__controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+  }
+
+  .comic-reader__nav,
+  .comic-reader__fullscreen {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    background-color: color-mix(in srgb, var(--color-text) 5%, transparent);
+    color: var(--color-text);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+  }
+
+  .comic-reader__nav:hover:not(:disabled),
+  .comic-reader__fullscreen:hover {
+    border-color: var(--color-accent);
+    background-color: color-mix(in srgb, var(--color-text) 9%, transparent);
+  }
+
+  .comic-reader__nav:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .comic-reader__counter {
+    margin: 0;
+    min-width: 5.5rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    font-size: var(--step--1);
+  }
+
+  .comic-reader:fullscreen .comic-reader__track {
+    border: 0;
+    border-radius: 0;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: auto;
+  }
+
+  .comic-reader:fullscreen {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    padding: var(--space-sm);
+    background: var(--color-bg);
+  }
+
+  .comic-reader:fullscreen .comic-reader__collection-label,
+  .comic-reader:fullscreen .comic-reader__controls {
+    flex-shrink: 0;
+  }
+
+  .comic-reader:fullscreen .comic-reader__viewport {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    background: var(--color-bg);
+  }
+</style>
+
+<script>
+  import { createComicNavigation } from '../lib/comic-navigation';
+
+  document.querySelectorAll('[data-comic-reader]').forEach((root) => {
+    if (!(root instanceof HTMLElement)) return;
+    const viewport = root.querySelector('[data-comic-viewport]');
+    const select = root.querySelector('[data-comic-select]');
+    const collections = Array.from(root.querySelectorAll<HTMLElement>('[data-comic-collection]'));
+    const pages = collections.map((collection) => Array.from(collection.querySelectorAll('[data-comic-page]')));
+    const prev = root.querySelector('[data-comic-prev]');
+    const next = root.querySelector('[data-comic-next]');
+    const counter = root.querySelector('[data-comic-counter]');
+    const fullscreenBtn = root.querySelector('[data-comic-fullscreen]');
+    if (!(viewport instanceof HTMLElement) || !(select instanceof HTMLSelectElement) || collections.length === 0) return;
+
+    const navigation = createComicNavigation(pages.map((slides) => slides.length));
+
+    const imgOf = (slide: Element | undefined): HTMLImageElement | null =>
+      slide ? slide.querySelector('img') : null;
+
+    const preload = (i: number) => {
+      const img = imgOf(pages[navigation.collection][i]);
+      if (!img) return;
+      const pre = new Image();
+      pre.src = img.currentSrc || img.src;
+    };
+
+    const render = () => {
+      const { collection, index, total } = navigation;
+      const pad = Math.max(2, String(total).length);
+      const slides = pages[collection];
+      collections.forEach((group, i) => { group.hidden = i !== collection; });
+      root.style.setProperty('--comic-stage-ratio', collections[collection].dataset.stageRatio ?? '1');
+      select.value = collections[collection].dataset.comicCollection ?? '';
+      slides.forEach((slide, i) => {
+        if (i === index) {
+          slide.removeAttribute('hidden');
+        } else {
+          slide.setAttribute('hidden', '');
+        }
+      });
+      if (prev instanceof HTMLButtonElement) prev.disabled = index === 0;
+      if (next instanceof HTMLButtonElement) next.disabled = index === total - 1;
+      if (counter) {
+        counter.textContent = `${String(index + 1).padStart(pad, '0')} / ${String(total).padStart(pad, '0')}`;
+      }
+      preload(index + 1);
+      preload(index - 1);
+    };
+
+    const go = (delta: number) => {
+      if (navigation.go(delta)) render();
+    };
+
+    select.disabled = false;
+    select.addEventListener('change', () => {
+      const target = collections.findIndex((group) => group.dataset.comicCollection === select.value);
+      if (navigation.select(target)) {
+        tracking = false;
+        render();
+      }
+    });
+
+    prev?.addEventListener('click', () => go(-1));
+    next?.addEventListener('click', () => go(1));
+
+    viewport.addEventListener('keydown', (event) => {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        go(-1);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        go(1);
+      }
+    });
+
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+    viewport.addEventListener(
+      'touchstart',
+      (event) => {
+        tracking = false;
+        if (event.touches.length !== 1 || (event.target instanceof Element && event.target.closest('button, select'))) return;
+        startX = event.touches[0].clientX;
+        startY = event.touches[0].clientY;
+        tracking = true;
+      },
+      { passive: true },
+    );
+    viewport.addEventListener('touchcancel', () => { tracking = false; }, { passive: true });
+    viewport.addEventListener(
+      'touchend',
+      (event) => {
+        if (!tracking) return;
+        tracking = false;
+        const touch = event.changedTouches[0];
+        if (!touch) return;
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+          go(dx < 0 ? 1 : -1);
+        }
+      },
+      { passive: true },
+    );
+
+    if (fullscreenBtn instanceof HTMLButtonElement) {
+      if (document.fullscreenEnabled) {
+        fullscreenBtn.hidden = false;
+        fullscreenBtn.addEventListener('click', async () => {
+          try {
+            if (document.fullscreenElement === root) {
+              await document.exitFullscreen();
+            } else {
+              await root.requestFullscreen();
+            }
+          } catch {
+            fullscreenBtn.disabled = true;
+            fullscreenBtn.setAttribute('aria-label', 'Fullscreen unavailable');
+          }
+        });
+        document.addEventListener('fullscreenchange', () => {
+          fullscreenBtn.setAttribute('aria-label', document.fullscreenElement === root ? 'Exit fullscreen' : 'View fullscreen');
+        });
+      } else {
+        fullscreenBtn.hidden = true;
+      }
+    }
+
+    render();
+  });
+</script>

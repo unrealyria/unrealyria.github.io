@@ -1,5 +1,7 @@
 ---
+import sagasHero from '../../assets/heroes/unrealyria-sagas-hero-v1.png';
 import EmptyState from '../../components/EmptyState.astro';
+import Hero from '../../components/Hero.astro';
 import SagaCard from '../../components/SagaCard.astro';
 import SagaFeature from '../../components/SagaFeature.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
@@ -14,18 +16,18 @@ const singleChapter = single ? (await content.getChapters(single.id))[0] : undef
   title="Sagas"
   description="Browse every published saga in the UnreaLyria universe."
 >
-  <section class="section section--tight">
-    <div class="container">
-      <header class="page-head">
-        <p class="eyebrow">The library</p>
-        <h1 class="page-head__title display">Sagas</h1>
-        <p class="lede">
-          Every published saga in the UnreaLyria universe. New sagas are added as they are approved
-          for release.
-        </p>
-      </header>
-    </div>
-  </section>
+  <Hero
+    variant="cinematic"
+    eyebrow="The library"
+    title="Sagas"
+    tagline="Explore the stories, worlds and adventures of UnreaLyria. Every saga opens a new chapter of the universe."
+    image={sagasHero}
+    imageAlt="Lyria at a desk surrounded by saga artwork, notes and maps pinned to a corkboard."
+    align="start"
+    focus="60% 28%"
+    focusMobile="72% 20%"
+    stacked
+  />
 
   {
     sagas.length === 0 ? (
@@ -39,7 +41,12 @@ const singleChapter = single ? (await content.getChapters(single.id))[0] : undef
         </div>
       </section>
     ) : single ? (
-      <SagaFeature saga={single} chapter={singleChapter} eyebrow="Now showing" />
+      <SagaFeature
+        saga={single}
+        chapter={singleChapter}
+        eyebrow="Now showing"
+        summary="One night in the real world. Years of adventures beyond reality. Follow LYRIA into a virtual world where every choice carries a consequence."
+      />
     ) : (
       <section class="section section--tight">
         <div class="container">

@@ -1,6 +1,11 @@
 ---
 import { render } from 'astro:content';
-import ChapterPanels from '../../../../components/ChapterPanels.astro';
+import ChapterComicReader from '../../../../components/ChapterComicReader.astro';
+import ChapterEnding from '../../../../components/ChapterEnding.astro';
+import welcomeWorldEndingArt from '../../../../assets/heroes/unrealyria-gateway-home-v1.png';
+import ChapterMusicHub from '../../../../components/ChapterMusicHub.astro';
+import ChapterOpening from '../../../../components/ChapterOpening.astro';
+import StoryReader from '../../../../components/StoryReader.astro';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import { content } from '../../../../lib/cms';
 import {
@@ -31,10 +36,17 @@ if (!saga || !chapter) {
 }
 
 const { Content } = await render(chapter);
-const storyFiles = await content.getStoryFiles(chapter.id);
+// Editorial hold applies only to this chapter page; CMS entries and other routes stay available.
+const isWelcomeWorld = saga.id === 'virtual-world' && chapter.id === 'virtual-world/01-welcome-world';
+const storyFiles = isWelcomeWorld ? [] : await content.getStoryFiles(chapter.id);
 const renderedStories = await Promise.all(
   storyFiles.map(async (file) => ({ file, Content: (await render(file)).Content })),
 );
+
+// Chapter-level theme track — only when the CMS explicitly links a music record
+// to this chapter (never inferred from the saga).
+const sagaMusic = await content.getMusic(saga.id);
+const chapterTrack = sagaMusic.find((track) => track.data.chapter?.id === chapter.id);
 
 const sagaChapters = await content.getChapters(saga.id);
 const position = sagaChapters.findIndex((entry) => entry.id === chapter.id);
@@ -45,6 +57,13 @@ const next =
 const publishedAt = chapter.data.publishedAt;
 const chapterNumber = String(chapter.data.number).padStart(2, '0');
 const chapterUrl = chapterPath(saga.id, chapterSlug(chapter.id));
+
+const breadcrumb = [
+  { href: homePath(), label: 'Home' },
+  { href: sagasPath(), label: 'Sagas' },
+  { href: sagaPath(saga.id), label: saga.data.title },
+  { label: `Chapter ${chapter.data.number}` },
+];
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -58,7 +77,7 @@ const jsonLd = {
 ---
 
 <BaseLayout
-  title={`Chapter ${chapter.data.number}: ${chapter.data.title}`}
+  title={`Chapter ${chapterNumber}: ${chapter.data.title}`}
   description={chapter.data.summary}
   theme={saga.data.theme}
   image={chapter.data.image ?? saga.data.image}
@@ -66,184 +85,129 @@ const jsonLd = {
   jsonLd={jsonLd}
 >
   <article>
-    <header class="reader-head">
+    <ChapterOpening
+      eyebrow={`Chapter ${chapterNumber}`}
+      title={chapter.data.title}
+      summary={chapter.data.summary}
+      sagaTitle={saga.data.title}
+      publishedAt={publishedAt}
+      image={chapter.data.image ?? saga.data.image}
+      imageAlt={chapter.data.imageAlt ?? `Key artwork for Chapter ${chapterNumber}.`}
+      breadcrumb={breadcrumb}
+    />
+
+    <div class="chapter-body">
+      {
+        chapterTrack && (
+          <div class="container">
+            <ChapterMusicHub track={chapterTrack} />
+          </div>
+        )
+      }
+
+      <div class="container" id={isWelcomeWorld ? 'chapter-comic' : undefined}>
+        <ChapterComicReader
+          srcDir={`/images/sagas/${saga.id}/chapters/${chapterSlug(chapter.id)}/pages`}
+          label={chapter.data.title}
+        />
+      </div>
+
+      {isWelcomeWorld ? (
+        <ChapterEnding
+          chapterTitle={chapter.data.title}
+          chapterNumber={chapterNumber}
+          chapterUrl={chapterUrl}
+          sagaTitle={saga.data.title}
+          sagaUrl={sagaPath(saga.id)}
+          artwork={welcomeWorldEndingArt}
+          srcDir={`/images/sagas/${saga.id}/chapters/${chapterSlug(chapter.id)}/pages`}
+          readerId="chapter-comic"
+        />
+      ) : (<Fragment>
       <div class="container">
-        <div class="reader">
-          <nav class="breadcrumb" aria-label="Breadcrumb">
-            <ol>
-              <li><a href={homePath()}>Home</a></li>
-              <li><a href={sagasPath()}>Sagas</a></li>
-              <li><a href={sagaPath(saga.id)}>{saga.data.title}</a></li>
-              <li aria-current="page">Chapter {chapter.data.number}</li>
-            </ol>
-          </nav>
+        <section class="chapter-narrative" aria-labelledby="chapter-narrative-heading">
+          <h2 id="chapter-narrative-heading" class="reader chapter-narrative__heading">Chapter narrative</h2>
+          <StoryReader panels={chapter.data.panels}>
+            <Content />
+          </StoryReader>
+        </section>
+      </div>
 
-          <p class="reader-head__chapter">Chapter {chapterNumber}</p>
-          <h1 class="reader-head__title display">{chapter.data.title}</h1>
-          <p class="reader-head__summary">{chapter.data.summary}</p>
+      {
+        renderedStories.length > 0 && (
+          <div class="container">
+            <section class="story reader" aria-labelledby="story-heading">
+              <h2 id="story-heading" class="story__heading">Story Files</h2>
+              {renderedStories.map(({ file, Content: StoryContent }) => (
+                <article class="story__item">
+                  <h3 class="story__title display">{file.data.title}</h3>
+                  <div class="prose story__body">
+                    <StoryContent />
+                  </div>
+                </article>
+              ))}
+            </section>
+          </div>
+        )
+      }
 
-          <p class="reader-head__meta">
-            <span>{saga.data.title}</span>
+      <div class="container">
+        <div class="reader chapter-end">
+          <nav class="chapter-nav" aria-label="Chapter navigation">
             {
-              publishedAt && (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <time datetime={publishedAt.toISOString()}>
-                    {publishedAt.toLocaleDateString('en', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </time>
-                </>
+              previous ? (
+                <a
+                  class="chapter-nav__link"
+                  href={chapterPath(saga.id, chapterSlug(previous.id))}
+                  rel="prev"
+                >
+                  <span class="chapter-nav__dir">← Previous</span>
+                  <span class="chapter-nav__label">
+                    Chapter {previous.data.number}: {previous.data.title}
+                  </span>
+                </a>
+              ) : (
+                <span class="chapter-nav__spacer" aria-hidden="true" />
               )
             }
-          </p>
-        </div>
-      </div>
-    </header>
-
-    <div class="section">
-      <div class="container">
-        <div class="reader">
-          <div class="prose">
-            <Content />
-          </div>
-        </div>
-      </div>
-
-      <ChapterPanels panels={chapter.data.panels} />
-
-      <div class="container">
-        <div class="reader">
-          {
-            renderedStories.length > 0 && (
-              <section class="story" aria-labelledby="story-heading">
-                <h2 id="story-heading" class="story__heading">Story files</h2>
-                {renderedStories.map(({ file, Content: StoryContent }) => (
-                  <article class="story__item">
-                    <h3 class="story__title display">{file.data.title}</h3>
-                    <div class="prose">
-                      <StoryContent />
-                    </div>
-                  </article>
-                ))}
-              </section>
-            )
-          }
-
-          {
-            (previous || next) && (
-              <nav class="chapter-nav" aria-label="Chapter navigation">
-                {previous ? (
-                  <a
-                    class="chapter-nav__link"
-                    href={chapterPath(saga.id, chapterSlug(previous.id))}
-                    rel="prev"
-                  >
-                    <span class="chapter-nav__dir">← Previous</span>
-                    <span class="chapter-nav__label">
-                      Chapter {previous.data.number}: {previous.data.title}
-                    </span>
-                  </a>
-                ) : (
-                  <span />
-                )}
-                {next ? (
-                  <a
-                    class="chapter-nav__link chapter-nav__link--next"
-                    href={chapterPath(saga.id, chapterSlug(next.id))}
-                    rel="next"
-                  >
-                    <span class="chapter-nav__dir">Next →</span>
-                    <span class="chapter-nav__label">
-                      Chapter {next.data.number}: {next.data.title}
-                    </span>
-                  </a>
-                ) : (
-                  <span />
-                )}
-              </nav>
-            )
-          }
+            <a class="btn btn--ghost chapter-nav__back" href={sagaPath(saga.id)}>Back to Saga</a>
+            {
+              next ? (
+                <a
+                  class="chapter-nav__link chapter-nav__link--next"
+                  href={chapterPath(saga.id, chapterSlug(next.id))}
+                  rel="next"
+                >
+                  <span class="chapter-nav__dir">Next →</span>
+                  <span class="chapter-nav__label">
+                    Chapter {next.data.number}: {next.data.title}
+                  </span>
+                </a>
+              ) : (
+                <span class="chapter-nav__spacer" aria-hidden="true" />
+              )
+            }
+          </nav>
 
           <p class="meta reader__foot">
-            <a href={chapterUrl}>Permalink</a> · <a href={sagaPath(saga.id)}>Back to {saga.data.title}</a>
+            <a href={chapterUrl}>Permalink</a>
           </p>
         </div>
       </div>
+      </Fragment>)}
     </div>
   </article>
 </BaseLayout>
 
 <style>
-  .reader-head {
-    position: relative;
-    padding-block: clamp(2.5rem, 1.5rem + 5vw, 4.5rem);
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .breadcrumb {
-    margin-bottom: var(--space-md);
-  }
-
-  .breadcrumb ol {
+  #chapter-comic { scroll-margin-top: 6rem; }
+  /* Single vertical rhythm for the whole chapter body — one gap between hero,
+     music hub, reading and ending (no duplicated margins). */
+  .chapter-body {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: var(--step--1);
-    color: var(--color-muted);
-  }
-
-  .breadcrumb li:not(:last-child)::after {
-    content: "/";
-    margin-left: 0.4rem;
-    opacity: 0.5;
-  }
-
-  .breadcrumb a {
-    color: var(--color-muted);
-    text-decoration: none;
-  }
-
-  .breadcrumb a:hover {
-    color: var(--color-text);
-  }
-
-  .reader-head__chapter {
-    margin: 0 0 var(--space-2xs);
-    font-size: var(--step--1);
-    font-weight: 600;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-  }
-
-  .reader-head__title {
-    margin: 0 0 var(--space-sm);
-    font-size: var(--step-4);
-    max-width: 20ch;
-  }
-
-  .reader-head__summary {
-    margin: 0;
-    max-width: 46ch;
-    color: color-mix(in srgb, var(--color-text) 82%, var(--color-muted));
-    font-size: var(--step-1);
-    text-wrap: pretty;
-  }
-
-  .reader-head__meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    margin: var(--space-md) 0 0;
-    color: var(--color-muted);
-    font-size: var(--step--1);
+    flex-direction: column;
+    gap: clamp(2.5rem, 1.75rem + 3vw, 4rem);
+    padding-block: clamp(2.75rem, 2rem + 3vw, 4rem) clamp(3rem, 2.5rem + 3vw, 5rem);
   }
 
   .reader {
@@ -251,30 +215,54 @@ const jsonLd = {
     margin-inline: auto;
   }
 
+  .chapter-narrative {
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .chapter-narrative__heading {
+    margin-block: 0 var(--space-md);
+    font-size: var(--step-2);
+  }
+
+  /* --- Story Files: distinct editorial blocks ----------------------------- */
   .story {
-    margin-top: var(--space-2xl);
-    padding-top: var(--space-xl);
+    padding-top: clamp(1.5rem, 1rem + 1.5vw, 2.25rem);
     border-top: 1px solid var(--color-border);
   }
 
   .story__heading {
+    margin: 0 0 var(--space-md);
     font-size: var(--step-2);
+  }
+
+  .story__item {
+    padding: clamp(1.25rem, 1rem + 1.5vw, 1.75rem);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--gradient-surface);
   }
 
   .story__item + .story__item {
-    margin-top: var(--space-xl);
+    margin-top: var(--space-md);
   }
 
   .story__title {
-    font-size: var(--step-2);
+    margin: 0 0 var(--space-sm);
+    font-size: var(--step-1);
     color: var(--color-primary);
   }
 
+  .story__body :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  /* --- Chapter ending ----------------------------------------------------- */
   .chapter-nav {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: stretch;
     gap: var(--space-sm);
-    margin-top: var(--space-2xl);
     padding-top: var(--space-lg);
     border-top: 1px solid var(--color-border);
   }
@@ -312,13 +300,38 @@ const jsonLd = {
     color: var(--color-muted);
   }
 
-  .reader__foot {
-    margin-top: var(--space-lg);
+  .chapter-nav__back {
+    align-self: center;
+    justify-self: center;
+    white-space: nowrap;
   }
 
-  @media (max-width: 34rem) {
+  .reader__foot {
+    margin-top: var(--space-md);
+    text-align: center;
+  }
+
+  @media (max-width: 40rem) {
+    .chapter-body {
+      gap: clamp(2rem, 1.5rem + 3vw, 3rem);
+    }
+
     .chapter-nav {
-      flex-direction: column;
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .chapter-nav__spacer {
+      display: none;
+    }
+
+    .chapter-nav__link--next {
+      text-align: left;
+    }
+
+    .chapter-nav__back {
+      justify-self: stretch;
+      text-align: center;
+      justify-content: center;
     }
   }
 </style>

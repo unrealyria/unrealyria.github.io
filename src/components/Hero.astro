@@ -13,6 +13,11 @@ interface Props {
   imageAlt?: string;
   imageMobile?: string | ImageMetadata;
   align?: 'start' | 'end';
+  focus?: string;
+  focusMobile?: string;
+  // Stacks the artwork above the copy below the large-desktop breakpoint so the
+  // text never overlaps the focal subject. Used by saga key-art heroes.
+  stacked?: boolean;
 }
 
 const {
@@ -25,10 +30,20 @@ const {
   imageAlt,
   imageMobile,
   align = 'start',
+  focus,
+  focusMobile,
+  stacked = false,
 } = Astro.props;
 
 const hasActions = Astro.slots.has('actions');
-const styleVars = theme ? themeToCssVars(theme) : undefined;
+const styleVars =
+  [
+    theme ? themeToCssVars(theme) : undefined,
+    focus ? `--hero-focus: ${focus}` : undefined,
+    focusMobile ? `--hero-focus-mobile: ${focusMobile}` : undefined,
+  ]
+    .filter(Boolean)
+    .join('; ') || undefined;
 
 // Imported assets (ImageMetadata) go through the Astro image pipeline for
 // AVIF/WebP responsive delivery; plain strings keep the legacy public-path
@@ -95,6 +110,13 @@ const mobileSources = mobileImage
 
 const [desktopAvif, desktopWebp] = desktopSources ?? [];
 const [mobileAvif, mobileWebp] = mobileSources ?? [];
+
+// Intrinsic dimensions for the <img>. Read from the getImage result rather than
+// the imported image object: reading a property off the import marks the asset
+// as "externally referenced" and makes Astro copy the full-resolution original
+// into the build output.
+const desktopWidth = desktopWebp?.options.width ?? 1600;
+const desktopHeight = desktopWebp?.options.height ?? 900;
 ---
 
 <section
@@ -104,6 +126,7 @@ const [mobileAvif, mobileWebp] = mobileSources ?? [];
     desktopImage ? 'hero--photo' : undefined,
     desktopImage ? `hero--align-${align}` : undefined,
     mobileImage ? 'hero--mobile-art' : undefined,
+    stacked ? 'hero--stack' : undefined,
   ]}
   style={styleVars}
 >
@@ -135,8 +158,8 @@ const [mobileAvif, mobileWebp] = mobileSources ?? [];
             class="hero__image"
             src={desktopWebp.src}
             alt={imageAlt ?? ''}
-            width={desktopImage.width}
-            height={desktopImage.height}
+            width={desktopWidth}
+            height={desktopHeight}
             loading="eager"
             decoding="async"
             fetchpriority="high"
@@ -307,7 +330,7 @@ const [mobileAvif, mobileWebp] = mobileSources ?? [];
 
   /* Default art direction: focal subject on the left, copy on the right. */
   .hero--photo .hero__image {
-    object-position: left 30%;
+    object-position: var(--hero-focus, left 30%);
   }
 
   .hero--photo .hero__scrim {
@@ -323,7 +346,7 @@ const [mobileAvif, mobileWebp] = mobileSources ?? [];
 
   /* Brand art direction: focal subject on the right, copy on the left. */
   .hero--align-start.hero--photo .hero__image {
-    object-position: right 32%;
+    object-position: var(--hero-focus, right 32%);
   }
 
   /* The scrim itself follows the copy side at each breakpoint (see the
@@ -338,7 +361,7 @@ const [mobileAvif, mobileWebp] = mobileSources ?? [];
     }
 
     .hero--align-end .hero__copy {
-      max-width: 40rem;
+      max-width: 36rem;
     }
 
     .hero--align-end .hero__scrim {
@@ -391,12 +414,12 @@ const [mobileAvif, mobileWebp] = mobileSources ?? [];
 
     /* Vertical artwork: keep the face/upper body in view. */
     .hero--photo .hero__image {
-      object-position: center 30%;
+      object-position: var(--hero-focus-mobile, center 30%);
     }
 
     /* Fallback when only a 16:9 asset is available: crop to the right subject. */
     .hero--align-start.hero--photo:not(.hero--mobile-art) .hero__image {
-      object-position: 82% 16%;
+      object-position: var(--hero-focus-mobile, 82% 16%);
     }
 
     .hero--photo .hero__actions {
@@ -422,6 +445,45 @@ const [mobileAvif, mobileWebp] = mobileSources ?? [];
           color-mix(in srgb, var(--color-bg) 52%, transparent),
           transparent 28%
         );
+    }
+  }
+
+  /* Stacked artwork (saga key art below large desktop): the image owns its own
+     block and the copy flows underneath, so the text can never cover the focal
+     subject. Above the breakpoint the cinematic overlay above still applies. */
+  @media (max-width: 79.9375rem) {
+    .hero--stack .hero__backdrop {
+      position: relative;
+      inset: auto;
+    }
+
+    .hero--stack .hero__picture {
+      position: relative;
+      inset: auto;
+    }
+
+    .hero--stack .hero__image {
+      height: auto;
+    }
+
+    /* Only a soft fade at the foot of the artwork blends it into the copy. */
+    .hero--stack .hero__scrim {
+      background: linear-gradient(
+        to top,
+        var(--color-bg) 1%,
+        color-mix(in srgb, var(--color-bg) 58%, transparent) 24%,
+        transparent 56%
+      );
+    }
+
+    .hero--stack .hero__inner {
+      display: block;
+      min-height: 0;
+      padding-block: clamp(1.75rem, 1rem + 3vw, 3rem) clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
+    }
+
+    .hero--stack .hero__copy {
+      max-width: 42rem;
     }
   }
 </style>

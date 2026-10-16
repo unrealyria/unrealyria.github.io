@@ -3,7 +3,7 @@ title: Arrival
 summary: The traveller steps across the threshold for the first time.
 chapter: virtual-world/01-welcome-world
 order: 1
-status: published
+status: draft
 locale: en
 ---
 
